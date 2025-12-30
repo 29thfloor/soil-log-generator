@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soil Boring Log Generator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin: 0 0 20px 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    h2 {
+      margin: 0 0 15px 0;
+      font-size: 1.1rem;
+      color: #555;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: #666;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    input[type="file"]:hover {
+      border-color: #999;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    button.secondary:hover {
+      background: #4b5563;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.75rem;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      resize: vertical;
+    }
+
+    #log-container {
+      min-height: 600px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    #log-container svg {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .csv-template {
+      font-size: 0.75rem;
+      color: #666;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre;
+      font-family: monospace;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      padding: 10px;
+      background: #fef2f2;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      background: #e5e7eb;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .tab.active {
+      background: #2563eb;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel">
+      <h1>Boring Log Generator</h1>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="csv">CSV Import</button>
+        <button class="tab" data-tab="json">JSON Editor</button>
+      </div>
+
+      <div id="csv-tab" class="tab-content active">
+        <h2>Import from CSV</h2>
+        <div class="controls">
+          <div>
+            <label>Upload CSV File</label>
+            <input type="file" id="csv-file" accept=".csv">
+          </div>
+
+          <div>
+            <label>CSV Format</label>
+            <div class="csv-template">depth_top,depth_bottom,uscs,description,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
+0,3.5,SM,"Brown silty SAND, loose",2,SPT,S-1,4,5,6,18
+3.5,12,CL,"Gray lean CLAY, stiff",5,SPT,S-2,8,10,12,16</div>
+          </div>
+
+          <button id="load-sample">Load Sample Data</button>
+
+          <div id="csv-error" class="error" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div id="json-tab" class="tab-content">
+        <h2>JSON Data</h2>
+        <div class="controls">
+          <textarea id="json-editor"></textarea>
+          <div class="button-group">
+            <button id="apply-json">Apply Changes</button>
+            <button id="format-json" class="secondary">Format</button>
+          </div>
+          <div id="json-error" class="error" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <h2>Export</h2>
+        <div class="button-group">
+          <button id="export-svg">Export SVG</button>
+          <button id="export-png" class="secondary">Export PNG</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Preview</h2>
+      <div id="log-container"></div>
+    </div>
+  </div>
+
+  <script src="csv-parser.js?v=4"></script>
+  <script src="boring-log.js?v=4"></script>
+  <script>
+    // Sample data for demonstration
+    const sampleData = {
+      boring: {
+        id: "B-1",
+        project: "Site Investigation - Example Project",
+        location: {
+          coords: [34.0522, -118.2437],
+          system: "WGS84"
+        },
+        elevation: 125.5,
+        date: "2025-01-15",
+        driller: "ABC Drilling Co.",
+        totalDepth: 30.0
+      },
+      groundwater: {
+        depth: 12.5,
+        note: "Stabilized after 24 hrs"
+      },
+      layers: [
+        {
+          depthTop: 0.0,
+          depthBottom: 3.5,
+          uscs: "SM",
+          description: "Brown silty SAND, fine grained, loose, moist"
+        },
+        {
+          depthTop: 3.5,
+          depthBottom: 12.0,
+          uscs: "CL",
+          description: "Gray lean CLAY, stiff, moist to wet"
+        },
+        {
+          depthTop: 12.0,
+          depthBottom: 22.0,
+          uscs: "SP",
+          description: "Gray-brown poorly graded SAND, medium dense, saturated"
+        },
+        {
+          depthTop: 22.0,
+          depthBottom: 30.0,
+          uscs: "GP-GM",
+          description: "Brown silty GRAVEL with sand, dense"
+        }
+      ],
+      samples: [
+        { depth: 2.0, type: "SPT", id: "S-1", blows: [4, 5, 6], recovery: 18 },
+        { depth: 5.0, type: "SPT", id: "S-2", blows: [8, 10, 12], recovery: 16 },
+        { depth: 10.0, type: "SPT", id: "S-3", blows: [12, 14, 15], recovery: 14 },
+        { depth: 15.0, type: "SPT", id: "S-4", blows: [18, 20, 22], recovery: 12 },
+        { depth: 20.0, type: "SPT", id: "S-5", blows: [25, 28, 30], recovery: 10 },
+        { depth: 25.0, type: "SHELBY", id: "U-1", recovery: 24 },
+        { depth: 28.0, type: "SPT", id: "S-6", blows: [35, 40, 45], recovery: 8 }
+      ]
+    };
+
+    // Initialize the boring log component
+    const container = document.getElementById('log-container');
+    const boringLog = new BoringLog(container);
+    const jsonEditor = document.getElementById('json-editor');
+
+    // Load sample data on init
+    boringLog.setData(sampleData);
+    jsonEditor.value = JSON.stringify(sampleData, null, 2);
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+      });
+    });
+
+    // Load sample data button
+    document.getElementById('load-sample').addEventListener('click', () => {
+      boringLog.setData(sampleData);
+      jsonEditor.value = JSON.stringify(sampleData, null, 2);
+      document.getElementById('csv-error').style.display = 'none';
+    });
+
+    // CSV file import
+    document.getElementById('csv-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = parseBoringLogCSV(event.target.result);
+          boringLog.setData(data);
+          jsonEditor.value = JSON.stringify(data, null, 2);
+          document.getElementById('csv-error').style.display = 'none';
+        } catch (err) {
+          document.getElementById('csv-error').textContent = 'Error parsing CSV: ' + err.message;
+          document.getElementById('csv-error').style.display = 'block';
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // JSON editor
+    document.getElementById('apply-json').addEventListener('click', () => {
+      try {
+        const data = JSON.parse(jsonEditor.value);
+        boringLog.setData(data);
+        document.getElementById('json-error').style.display = 'none';
+      } catch (err) {
+        document.getElementById('json-error').textContent = 'Invalid JSON: ' + err.message;
+        document.getElementById('json-error').style.display = 'block';
+      }
+    });
+
+    document.getElementById('format-json').addEventListener('click', () => {
+      try {
+        const data = JSON.parse(jsonEditor.value);
+        jsonEditor.value = JSON.stringify(data, null, 2);
+        document.getElementById('json-error').style.display = 'none';
+      } catch (err) {
+        document.getElementById('json-error').textContent = 'Invalid JSON: ' + err.message;
+        document.getElementById('json-error').style.display = 'block';
+      }
+    });
+
+    // Export SVG
+    document.getElementById('export-svg').addEventListener('click', () => {
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'boring-log.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Export PNG
+    document.getElementById('export-png').addEventListener('click', () => {
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+        ctx.scale(2, 2);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'boring-log.png';
+        a.click();
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    });
+  </script>
+</body>
+</html>
