@@ -229,8 +229,8 @@
     </div>
   </div>
 
-  <script src="csv-parser.js?v=6"></script>
-  <script src="boring-log.js?v=6"></script>
+  <script src="csv-parser.js?v=7"></script>
+  <script src="boring-log.js?v=7"></script>
   <script>
     // Sample data for demonstration
     const sampleData = {
@@ -253,9 +253,12 @@
           system: "WGS84"
         },
         elevation: 125.5,
-        date: "2025-01-15",
-        time: "08:30",
+        dateStart: "2025-01-15",
+        dateComplete: "2025-01-16",
         weather: "Clear, 65°F",
+        equipment: "CME-75 Truck Rig",
+        loggedBy: "J. Doe, P.G.",
+        drillingMethod: "Hollow Stem Auger",
         totalDepth: 30.0
       },
       groundwater: {
@@ -265,15 +268,23 @@
       layers: [
         {
           depthTop: 0.0,
-          depthBottom: 3.5,
-          uscs: "SM",
-          description: "Brown silty SAND, fine grained, loose",
+          depthBottom: 1.5,
+          uscs: "TS",
+          description: "Dark brown TOPSOIL with roots and organic matter",
+          moisture: "moist",
+          odor: "organic"
+        },
+        {
+          depthTop: 1.5,
+          depthBottom: 4.0,
+          uscs: "FILL",
+          description: "FILL - Mixed gravel, sand and debris",
           moisture: "moist",
           odor: "petroleum",
           pid: 45.2
         },
         {
-          depthTop: 3.5,
+          depthTop: 4.0,
           depthBottom: 12.0,
           uscs: "CL",
           description: "Gray lean CLAY, stiff",
@@ -301,13 +312,13 @@
         }
       ],
       samples: [
-        { depth: 2.0, type: "SPT", id: "S-1", blows: [4, 5, 6], recovery: 18 },
-        { depth: 5.0, type: "SPT", id: "S-2", blows: [8, 10, 12], recovery: 16 },
-        { depth: 10.0, type: "SPT", id: "S-3", blows: [12, 14, 15], recovery: 14 },
-        { depth: 15.0, type: "SPT", id: "S-4", blows: [18, 20, 22], recovery: 12 },
-        { depth: 20.0, type: "SPT", id: "S-5", blows: [25, 28, 30], recovery: 10 },
-        { depth: 25.0, type: "SHELBY", id: "U-1", recovery: 24 },
-        { depth: 28.0, type: "SPT", id: "S-6", blows: [35, 40, 45], recovery: 8 }
+        { depthTop: 1.0, depthBottom: 2.5, type: "SPT", id: "S-1", blows: [4, 5, 6], recovery: 18 },
+        { depthTop: 4.5, depthBottom: 6.0, type: "SPT", id: "S-2", blows: [8, 10, 12], recovery: 16 },
+        { depthTop: 9.5, depthBottom: 11.0, type: "SPT", id: "S-3", blows: [12, 14, 15], recovery: 14 },
+        { depthTop: 14.5, depthBottom: 16.0, type: "SPT", id: "S-4", blows: [18, 20, 22], recovery: 12 },
+        { depthTop: 19.5, depthBottom: 21.0, type: "SPT", id: "S-5", blows: [25, 28, 30], recovery: 10 },
+        { depthTop: 24.0, depthBottom: 26.0, type: "SHELBY", id: "U-1", recovery: 24 },
+        { depthTop: 27.5, depthBottom: 29.0, type: "SPT", id: "S-6", blows: [35, 40, 45], recovery: 8 }
       ],
       well: {
         type: "monitoring",

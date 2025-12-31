@@ -124,9 +124,14 @@ const boringLog = new BoringLog(container, {
 | | location.coords | [lat, long] or [x, y] coordinates |
 | | location.system | Coordinate system (e.g., "WGS84") |
 | | elevation | Ground surface elevation (ft) |
-| | date | Date of drilling |
+| | date | Date of drilling (single-day) |
+| | dateStart | Start date (multi-day drilling) |
+| | dateComplete | Completion date (multi-day drilling) |
 | | time | Time of drilling |
 | | weather | Weather conditions |
+| | equipment | Drill rig model/type |
+| | loggedBy | Field geologist/engineer name |
+| | drillingMethod | HSA, mud rotary, sonic, etc. |
 | | totalDepth | Total boring depth (ft) |
 | **groundwater** | depth | Depth to groundwater (ft) |
 | | note | Groundwater notes |
@@ -137,7 +142,9 @@ const boringLog = new BoringLog(container, {
 | | moisture | dry, moist, wet, saturated |
 | | odor | none, petroleum, chlorinated, organic |
 | | pid | PID reading (ppm) |
-| **samples[]** | depth | Sample depth (ft) |
+| **samples[]** | depth | Sample depth (ft) - single point |
+| | depthTop | Top of sample interval (ft) |
+| | depthBottom | Bottom of sample interval (ft) |
 | | type | SPT, SHELBY, GRAB, etc. |
 | | id | Sample identifier |
 | | blows | [blow1, blow2, blow3] for SPT |
@@ -178,7 +185,9 @@ B-1,Phase II ESA,State EPA,2025-01-20,09:15,Clear 65F,Geo Services Inc,0,4,SM,"B
 B-1,,,,,,,4,10,CL,"Gray lean CLAY",wet,none,1.2,5,SPT,S-2,7,9,11,16
 ```
 
-## USCS Soil Classifications
+## Soil Classifications
+
+### USCS Codes
 
 | Code | Description |
 |------|-------------|
@@ -197,6 +206,72 @@ B-1,,,,,,,4,10,CL,"Gray lean CLAY",wet,none,1.2,5,SPT,S-2,7,9,11,16
 | OL | Organic silt |
 | OH | Organic clay |
 | PT | Peat |
+
+### Extended Codes
+
+| Code | Description |
+|------|-------------|
+| TS | Topsoil |
+| FILL | Fill material |
+| ROCK | Rock |
+| BR | Bedrock |
+| QUA | Quartz |
+| ARG | Argillite |
+| MK | Micaceous silt |
+
+Custom codes are also supported - unknown codes will display with a default pattern.
+
+## Comparison to Professional Boring Logs
+
+Based on analysis of professional boring log examples, this tool implements the core features while some advanced features remain on the roadmap.
+
+### Implemented
+
+| Feature | Status |
+|---------|--------|
+| Header with project info, boring ID, location | Implemented |
+| Coordinates with user-defined system | Implemented |
+| Surface elevation | Implemented |
+| Depth column with tick marks | Implemented |
+| **Elevation column** | Implemented - calculated from surface elevation |
+| USCS classification with pattern fills | Implemented |
+| **Non-USCS codes** | Implemented - TS, FILL, ROCK, QUA, ARG, custom |
+| Soil description column | Implemented |
+| SPT blow counts (3 intervals) + N-value | Implemented |
+| Sample recovery | Implemented |
+| Sample type indicators | Implemented |
+| **Sample depth ranges** | Implemented - shows interval like "S-1 (9-10)" |
+| Groundwater level indicator | Implemented |
+| Moisture column | Implemented |
+| PID readings (conditional column) | Implemented |
+| Odor column (conditional) | Implemented |
+| Well construction diagram | Implemented |
+| Dynamic legend | Implemented |
+| SVG/PNG export | Implemented |
+| **Equipment field** | Implemented |
+| **Logged by field** | Implemented |
+| **Drilling method** | Implemented |
+| **Separate start/complete dates** | Implemented |
+
+### Roadmap
+
+These features are commonly found in professional boring logs but not yet implemented:
+
+| Feature | Description |
+|---------|-------------|
+| Water levels column | First encountered vs. completion depth markers |
+| Sheet numbering | "Sheet 1 of 2" pagination for multi-page logs |
+| Remarks section | Additional notes area |
+| Station field | Survey station reference |
+| Footer disclaimer | Professional liability text |
+| Logo/branding area | Company logo placement |
+| Graphic scale bar | Visual depth reference |
+| Plastic/liquid limits | Atterberg limits for cohesive soils |
+| Hammer type/weight | SPT equipment details |
+
+### Example Sources
+
+Professional boring log examples were reviewed from geotechnical consulting firms to identify standard industry practices. Common formats include single-column logs with integrated well diagrams, multi-page layouts for deep borings, and environmental logs with contaminant tracking columns.
 
 ## Development
 

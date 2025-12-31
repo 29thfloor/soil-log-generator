@@ -11,7 +11,7 @@ class BoringLog {
     // Default configuration
     this.config = {
       width: 700,
-      headerHeight: 160,
+      headerHeight: 190,
       footerHeight: 40,
       legendHeight: 140,
       wellPanelWidth: 150,
@@ -21,6 +21,7 @@ class BoringLog {
       // Base columns (always shown)
       baseColumns: {
         depth: { width: 40, label: 'Depth' },
+        elevation: { width: 45, label: 'Elev.' },
         graphic: { width: 60, label: 'Soil' },
         uscs: { width: 45, label: 'USCS' },
         description: { width: 200, label: 'Description' },
@@ -163,8 +164,32 @@ class BoringLog {
       'OH': { type: 'organic', fill: '#6b5344' },
 
       // Peat
-      'PT': { type: 'peat', fill: '#4a3728' }
+      'PT': { type: 'peat', fill: '#4a3728' },
+
+      // === Non-USCS / Extended Codes ===
+      // Topsoil
+      'TS': { type: 'topsoil', fill: '#5d4e37' },
+      'TOPSOIL': { type: 'topsoil', fill: '#5d4e37' },
+
+      // Fill material
+      'FILL': { type: 'fill', fill: '#9e9e9e' },
+
+      // Rock types
+      'QUA': { type: 'rock', fill: '#d4d4d4' },  // Quartz
+      'ARG': { type: 'rock', fill: '#b8a090' },  // Argillite
+      'ROCK': { type: 'rock', fill: '#c0c0c0' },
+      'BR': { type: 'rock', fill: '#a0a0a0' },   // Bedrock
+
+      // Other common codes
+      'ORGANICS': { type: 'organic', fill: '#6b5344' },
+      'MK': { type: 'silt', fill: '#a8c4a8' },   // Micaceous silt
+
+      // Default for unknown codes
+      'DEFAULT': { type: 'default', fill: '#e0e0e0' }
     };
+
+    // Store patterns for dynamic lookup
+    this.knownPatterns = new Set(Object.keys(patterns));
 
     for (const [uscs, config] of Object.entries(patterns)) {
       const pattern = this.createUSCSPattern(uscs, config);
@@ -242,6 +267,18 @@ class BoringLog {
         break;
       case 'peat':
         this.addPeatPattern(pattern);
+        break;
+      case 'topsoil':
+        this.addTopsoilPattern(pattern);
+        break;
+      case 'fill':
+        this.addFillPattern(pattern);
+        break;
+      case 'rock':
+        this.addRockPattern(pattern);
+        break;
+      case 'default':
+        this.addDefaultPattern(pattern);
         break;
     }
 
@@ -330,6 +367,93 @@ class BoringLog {
     }
   }
 
+  addTopsoilPattern(pattern) {
+    // Root-like organic pattern with dots
+    const dots = [[3, 5], [8, 3], [13, 6], [5, 11], [10, 13]];
+    dots.forEach(([cx, cy]) => {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', cx);
+      dot.setAttribute('cy', cy);
+      dot.setAttribute('r', '1.5');
+      dot.setAttribute('fill', '#3d3225');
+      pattern.appendChild(dot);
+    });
+    // Wavy line for organic material
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M0,8 Q4,6 8,8 Q12,10 16,8');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#3d3225');
+    path.setAttribute('stroke-width', '0.5');
+    pattern.appendChild(path);
+  }
+
+  addFillPattern(pattern) {
+    // Random angular shapes to represent mixed fill material
+    const shapes = [
+      'M2,2 L5,2 L4,5 Z',
+      'M10,3 L14,4 L12,7 L9,6 Z',
+      'M3,10 L7,9 L6,13 L2,12 Z',
+      'M11,11 L14,10 L15,14 L11,14 Z'
+    ];
+    shapes.forEach(d => {
+      const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shape.setAttribute('d', d);
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', '#555');
+      shape.setAttribute('stroke-width', '0.5');
+      pattern.appendChild(shape);
+    });
+  }
+
+  addRockPattern(pattern) {
+    // Brick-like pattern for rock
+    for (let y = 0; y <= 16; y += 8) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', '0');
+      line.setAttribute('y1', y);
+      line.setAttribute('x2', '16');
+      line.setAttribute('y2', y);
+      line.setAttribute('stroke', '#666');
+      line.setAttribute('stroke-width', '0.5');
+      pattern.appendChild(line);
+    }
+    // Vertical lines offset
+    const vLines = [[8, 0, 8], [0, 8, 8], [16, 8, 8]];
+    vLines.forEach(([x, y1, h]) => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x);
+      line.setAttribute('y2', y1 + h);
+      line.setAttribute('stroke', '#666');
+      line.setAttribute('stroke-width', '0.5');
+      pattern.appendChild(line);
+    });
+  }
+
+  addDefaultPattern(pattern) {
+    // Simple cross-hatch for unknown soil types
+    for (let i = 0; i <= 16; i += 8) {
+      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line1.setAttribute('x1', i);
+      line1.setAttribute('y1', '0');
+      line1.setAttribute('x2', i);
+      line1.setAttribute('y2', '16');
+      line1.setAttribute('stroke', '#999');
+      line1.setAttribute('stroke-width', '0.3');
+      pattern.appendChild(line1);
+
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line2.setAttribute('x1', '0');
+      line2.setAttribute('y1', i);
+      line2.setAttribute('x2', '16');
+      line2.setAttribute('y2', i);
+      line2.setAttribute('stroke', '#999');
+      line2.setAttribute('stroke-width', '0.3');
+      pattern.appendChild(line2);
+    }
+  }
+
   renderHeader(parent, width) {
     const { boring, groundwater } = this.data;
     const { colors, headerHeight } = this.config;
@@ -349,8 +473,8 @@ class BoringLog {
     const col1X = 10;
     const col2X = width / 3;
     const col3X = (width / 3) * 2;
-    const lineHeight = 14;
-    let y = 18;
+    const lineHeight = 13;
+    let y = 16;
 
     // === Column 1: Project & Site Info ===
     const title = this.createText(`BORING LOG: ${boring.id}`, col1X, y, { fontWeight: 'bold', fontSize: '13px' });
@@ -375,7 +499,7 @@ class BoringLog {
     }
 
     if (boring.elevation !== undefined) {
-      const elevation = this.createText(`Elevation: ${boring.elevation} ft`, col1X, y, { fontSize: '10px' });
+      const elevation = this.createText(`Surface Elev: ${boring.elevation} ft`, col1X, y, { fontSize: '10px' });
       parent.appendChild(elevation);
       y += lineHeight;
     }
@@ -390,8 +514,8 @@ class BoringLog {
       parent.appendChild(gw);
     }
 
-    // === Column 2: Consultant Info ===
-    y = 18;
+    // === Column 2: Consultant & Drilling Info ===
+    y = 16;
     if (boring.consultant) {
       const consultantLabel = this.createText('CONSULTANT', col2X, y, { fontWeight: 'bold', fontSize: '10px' });
       parent.appendChild(consultantLabel);
@@ -410,11 +534,29 @@ class BoringLog {
       if (boring.consultant.phone) {
         const phone = this.createText(boring.consultant.phone, col2X, y, { fontSize: '10px' });
         parent.appendChild(phone);
+        y += lineHeight;
       }
     }
 
+    // Drilling info below consultant
+    y += 4;
+    if (boring.drillingMethod) {
+      const method = this.createText(`Method: ${boring.drillingMethod}`, col2X, y, { fontSize: '9px' });
+      parent.appendChild(method);
+      y += lineHeight;
+    }
+    if (boring.equipment) {
+      const equip = this.createText(`Equipment: ${boring.equipment}`, col2X, y, { fontSize: '9px' });
+      parent.appendChild(equip);
+      y += lineHeight;
+    }
+    if (boring.loggedBy) {
+      const logged = this.createText(`Logged By: ${boring.loggedBy}`, col2X, y, { fontSize: '9px' });
+      parent.appendChild(logged);
+    }
+
     // === Column 3: Driller & Date Info ===
-    y = 18;
+    y = 16;
     const drillerLabel = this.createText('DRILLER', col3X, y, { fontWeight: 'bold', fontSize: '10px' });
     parent.appendChild(drillerLabel);
     y += lineHeight;
@@ -443,9 +585,18 @@ class BoringLog {
     }
 
     y += 4;
-    const dateText = boring.time ? `${boring.date} ${boring.time}` : boring.date;
-    const date = this.createText(`Date: ${dateText}`, col3X, y, { fontSize: '10px' });
-    parent.appendChild(date);
+    // Support both single date and start/complete dates
+    if (boring.dateStart && boring.dateComplete) {
+      const startDate = this.createText(`Start: ${boring.dateStart}`, col3X, y, { fontSize: '10px' });
+      parent.appendChild(startDate);
+      y += lineHeight;
+      const completeDate = this.createText(`Complete: ${boring.dateComplete}`, col3X, y, { fontSize: '10px' });
+      parent.appendChild(completeDate);
+    } else {
+      const dateText = boring.time ? `${boring.date} ${boring.time}` : boring.date;
+      const date = this.createText(`Date: ${dateText}`, col3X, y, { fontSize: '10px' });
+      parent.appendChild(date);
+    }
 
     if (boring.weather) {
       y += lineHeight;
@@ -494,43 +645,65 @@ class BoringLog {
   renderDepthScale(parent, startY, height, totalDepth) {
     const { colors, depthScale } = this.config;
     const columns = this.activeColumns;
-    const colWidth = columns.depth.width;
+    const depthColWidth = columns.depth.width;
+    const elevColWidth = columns.elevation.width;
+    const surfaceElevation = this.data.boring.elevation;
 
-    // Background
-    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('x', '0');
-    bg.setAttribute('y', startY);
-    bg.setAttribute('width', colWidth);
-    bg.setAttribute('height', height);
-    bg.setAttribute('fill', 'white');
-    bg.setAttribute('stroke', colors.border);
-    parent.appendChild(bg);
+    // Depth column background
+    const depthBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    depthBg.setAttribute('x', '0');
+    depthBg.setAttribute('y', startY);
+    depthBg.setAttribute('width', depthColWidth);
+    depthBg.setAttribute('height', height);
+    depthBg.setAttribute('fill', 'white');
+    depthBg.setAttribute('stroke', colors.border);
+    parent.appendChild(depthBg);
 
-    // Depth markers
+    // Elevation column background
+    const elevBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    elevBg.setAttribute('x', depthColWidth);
+    elevBg.setAttribute('y', startY);
+    elevBg.setAttribute('width', elevColWidth);
+    elevBg.setAttribute('height', height);
+    elevBg.setAttribute('fill', 'white');
+    elevBg.setAttribute('stroke', colors.border);
+    parent.appendChild(elevBg);
+
+    // Depth and elevation markers
     const interval = totalDepth <= 20 ? 2 : 5;
     for (let d = 0; d <= totalDepth; d += interval) {
       const y = startY + d * depthScale;
 
-      // Tick mark
+      // Tick mark for depth
       const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      tick.setAttribute('x1', colWidth - 10);
+      tick.setAttribute('x1', depthColWidth - 10);
       tick.setAttribute('y1', y);
-      tick.setAttribute('x2', colWidth);
+      tick.setAttribute('x2', depthColWidth);
       tick.setAttribute('y2', y);
       tick.setAttribute('stroke', colors.border);
       parent.appendChild(tick);
 
-      // Label
-      const label = this.createText(d.toString(), colWidth - 15, y + 4, {
+      // Depth label
+      const depthLabel = this.createText(d.toString(), depthColWidth - 15, y + 4, {
         fontSize: '9px',
         textAnchor: 'end'
       });
-      parent.appendChild(label);
+      parent.appendChild(depthLabel);
+
+      // Elevation label (if surface elevation is known)
+      if (surfaceElevation !== undefined) {
+        const elev = (surfaceElevation - d).toFixed(1);
+        const elevLabel = this.createText(elev, depthColWidth + elevColWidth / 2, y + 4, {
+          fontSize: '8px',
+          textAnchor: 'middle'
+        });
+        parent.appendChild(elevLabel);
+      }
 
       // Grid line across all columns
       if (d > 0 && d < totalDepth) {
         const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        gridLine.setAttribute('x1', colWidth);
+        gridLine.setAttribute('x1', depthColWidth + elevColWidth);
         gridLine.setAttribute('y1', y);
         gridLine.setAttribute('x2', Object.values(columns).reduce((sum, col) => sum + col.width, 0));
         gridLine.setAttribute('y2', y);
@@ -663,24 +836,54 @@ class BoringLog {
     const recoveryX = colPositions.recovery.x;
 
     for (const sample of samples) {
-      const y = startY + sample.depth * depthScale;
+      // Support both single depth and depth range
+      const hasRange = sample.depthTop !== undefined && sample.depthBottom !== undefined;
+      const depthTop = hasRange ? sample.depthTop : sample.depth;
+      const depthBottom = hasRange ? sample.depthBottom : sample.depth;
+      const centerDepth = hasRange ? (depthTop + depthBottom) / 2 : sample.depth;
+      const y = startY + centerDepth * depthScale;
 
       // Sample marker and ID
+      const markerHeight = hasRange ? Math.max(16, (depthBottom - depthTop) * depthScale) : 16;
+      const markerY = hasRange ? startY + depthTop * depthScale : y - 8;
+
       const marker = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       marker.setAttribute('x', sampleX + 3);
-      marker.setAttribute('y', y - 8);
+      marker.setAttribute('y', markerY);
       marker.setAttribute('width', colPositions.sample.width - 6);
-      marker.setAttribute('height', '16');
+      marker.setAttribute('height', markerHeight);
       marker.setAttribute('fill', sample.type === 'SPT' ? '#fff3cd' : '#d4edda');
       marker.setAttribute('stroke', colors.border);
       marker.setAttribute('rx', '2');
       parent.appendChild(marker);
 
-      const idLabel = this.createText(sample.id, sampleX + colPositions.sample.width / 2, y + 4, {
-        fontSize: '7px',
-        textAnchor: 'middle'
-      });
-      parent.appendChild(idLabel);
+      // Sample ID with optional depth range
+      let idText = sample.id;
+      if (hasRange) {
+        idText = `${sample.id}\n(${depthTop}-${depthBottom})`;
+      }
+
+      // For range display, show ID and range on separate lines
+      if (hasRange) {
+        const idLabel = this.createText(sample.id, sampleX + colPositions.sample.width / 2, markerY + markerHeight / 2 - 3, {
+          fontSize: '7px',
+          textAnchor: 'middle'
+        });
+        parent.appendChild(idLabel);
+
+        const rangeLabel = this.createText(`(${depthTop}-${depthBottom})`, sampleX + colPositions.sample.width / 2, markerY + markerHeight / 2 + 7, {
+          fontSize: '6px',
+          textAnchor: 'middle',
+          fill: '#666'
+        });
+        parent.appendChild(rangeLabel);
+      } else {
+        const idLabel = this.createText(sample.id, sampleX + colPositions.sample.width / 2, y + 4, {
+          fontSize: '7px',
+          textAnchor: 'middle'
+        });
+        parent.appendChild(idLabel);
+      }
 
       // SPT N-value
       if (sample.blows && sample.blows.length === 3) {
@@ -711,12 +914,13 @@ class BoringLog {
         parent.appendChild(recLabel);
       }
 
-      // Depth indicator line
+      // Depth indicator line (at center of sample)
+      const depthLineY = hasRange ? startY + depthTop * depthScale : y;
       const depthLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      depthLine.setAttribute('x1', colPositions.depth.width);
-      depthLine.setAttribute('y1', y);
+      depthLine.setAttribute('x1', colPositions.depth.width + colPositions.elevation.width);
+      depthLine.setAttribute('y1', depthLineY);
       depthLine.setAttribute('x2', sampleX);
-      depthLine.setAttribute('y2', y);
+      depthLine.setAttribute('y2', depthLineY);
       depthLine.setAttribute('stroke', '#999');
       depthLine.setAttribute('stroke-dasharray', '1,2');
       parent.appendChild(depthLine);
@@ -909,8 +1113,9 @@ class BoringLog {
     const { colors } = this.config;
     const { layers, groundwater } = this.data;
 
-    // USCS soil descriptions
+    // USCS and extended soil descriptions
     const allDescriptions = {
+      // Standard USCS codes
       'GW': 'Well-graded gravel',
       'GP': 'Poorly graded gravel',
       'GM': 'Silty gravel',
@@ -925,7 +1130,17 @@ class BoringLog {
       'CH': 'Clay (high plasticity)',
       'OL': 'Organic silt',
       'OH': 'Organic clay',
-      'PT': 'Peat'
+      'PT': 'Peat',
+      // Extended / Non-USCS codes
+      'TS': 'Topsoil',
+      'TOPSOIL': 'Topsoil',
+      'FILL': 'Fill material',
+      'QUA': 'Quartz',
+      'ARG': 'Argillite',
+      'ROCK': 'Rock',
+      'BR': 'Bedrock',
+      'ORGANICS': 'Organic material',
+      'MK': 'Micaceous silt'
     };
 
     // Get unique USCS codes used in this diagram
@@ -933,13 +1148,19 @@ class BoringLog {
     if (layers) {
       layers.forEach(layer => {
         // Handle dual classifications like "GP-GM" - add both parts
-        const parts = layer.uscs.split('-');
+        const parts = layer.uscs.toUpperCase().split('-');
         parts.forEach(code => usedCodes.add(code));
       });
     }
 
-    // Filter to only used codes
-    const entries = Object.entries(allDescriptions).filter(([code]) => usedCodes.has(code));
+    // Build legend entries - include unknown codes with their code as description
+    const entries = [];
+    usedCodes.forEach(code => {
+      const description = allDescriptions[code] || code; // Use code as description if unknown
+      entries.push([code, description]);
+    });
+    // Sort entries by code
+    entries.sort((a, b) => a[0].localeCompare(b[0]));
 
     // Calculate dynamic legend height
     const hasGroundwater = groundwater && groundwater.depth !== undefined;
@@ -1077,11 +1298,19 @@ class BoringLog {
 
   getPatternId(uscs) {
     // Handle dual classifications like "GP-GM"
-    const primary = uscs.split('-')[0];
-    if (document.getElementById(`pattern-${uscs}`)) {
-      return `pattern-${uscs}`;
+    const upperUSCS = uscs.toUpperCase();
+    const primary = upperUSCS.split('-')[0];
+
+    // Check for exact match first
+    if (this.knownPatterns && this.knownPatterns.has(upperUSCS)) {
+      return `pattern-${upperUSCS}`;
     }
-    return `pattern-${primary}`;
+    // Check for primary code (first part of dual classification)
+    if (this.knownPatterns && this.knownPatterns.has(primary)) {
+      return `pattern-${primary}`;
+    }
+    // Fall back to default pattern for unknown codes
+    return 'pattern-DEFAULT';
   }
 
   createText(content, x, y, options = {}) {

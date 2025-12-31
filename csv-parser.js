@@ -49,6 +49,13 @@ function parseBoringLogCSV(csvContent, options = {}) {
   let metaCoord2 = null;
   let metaCoordSystem = null;
 
+  // New header fields
+  let metaEquipment = null;
+  let metaLoggedBy = null;
+  let metaDrillingMethod = null;
+  let metaDateStart = null;
+  let metaDateComplete = null;
+
   // Consultant info
   let consultantCompany = null;
   let consultantContact = null;
@@ -124,6 +131,23 @@ function parseBoringLogCSV(csvContent, options = {}) {
     }
     if (colIndex['coord_system'] !== undefined && getCell(row, 'coord_system')) {
       metaCoordSystem = getCell(row, 'coord_system');
+    }
+
+    // === New header fields ===
+    if (colIndex['equipment'] !== undefined && getCell(row, 'equipment')) {
+      metaEquipment = getCell(row, 'equipment');
+    }
+    if (colIndex['logged_by'] !== undefined && getCell(row, 'logged_by')) {
+      metaLoggedBy = getCell(row, 'logged_by');
+    }
+    if (colIndex['drilling_method'] !== undefined && getCell(row, 'drilling_method')) {
+      metaDrillingMethod = getCell(row, 'drilling_method');
+    }
+    if (colIndex['date_start'] !== undefined && getCell(row, 'date_start')) {
+      metaDateStart = getCell(row, 'date_start');
+    }
+    if (colIndex['date_complete'] !== undefined && getCell(row, 'date_complete')) {
+      metaDateComplete = getCell(row, 'date_complete');
     }
 
     // === Consultant info ===
@@ -241,16 +265,30 @@ function parseBoringLogCSV(csvContent, options = {}) {
     }
 
     // === Sample data ===
+    // Support both single depth and depth range
     const sampleDepth = getNumericCell(row, 'sample_depth');
+    const sampleDepthTop = getNumericCell(row, 'sample_depth_top');
+    const sampleDepthBottom = getNumericCell(row, 'sample_depth_bottom');
     const sampleType = getCell(row, 'sample_type');
     const sampleId = getCell(row, 'sample_id');
 
-    if (sampleDepth !== null && sampleType && sampleId) {
+    // Determine if we have valid sample data
+    const hasDepth = sampleDepth !== null || (sampleDepthTop !== null && sampleDepthBottom !== null);
+
+    if (hasDepth && sampleType && sampleId) {
       const sample = {
-        depth: sampleDepth,
         type: sampleType.toUpperCase(),
         id: sampleId
       };
+
+      // Use depth range if available, otherwise single depth
+      if (sampleDepthTop !== null && sampleDepthBottom !== null) {
+        sample.depthTop = sampleDepthTop;
+        sample.depthBottom = sampleDepthBottom;
+        sample.depth = (sampleDepthTop + sampleDepthBottom) / 2; // For backward compatibility
+      } else {
+        sample.depth = sampleDepth;
+      }
 
       // SPT blows
       const blow1 = getNumericCell(row, 'blow1');
@@ -267,13 +305,15 @@ function parseBoringLogCSV(csvContent, options = {}) {
         sample.recovery = recovery;
       }
 
-      // Check for duplicate sample
-      const existingSample = samples.find(s => s.depth === sampleDepth && s.id === sampleId);
+      // Check for duplicate sample (by ID)
+      const existingSample = samples.find(s => s.id === sampleId);
       if (!existingSample) {
         samples.push(sample);
       }
 
-      maxDepth = Math.max(maxDepth, sampleDepth);
+      // Track max depth
+      const effectiveDepth = sample.depthBottom || sample.depth;
+      maxDepth = Math.max(maxDepth, effectiveDepth);
     }
   }
 
@@ -311,6 +351,23 @@ function parseBoringLogCSV(csvContent, options = {}) {
       coords: [metaCoord1, metaCoord2],
       system: metaCoordSystem || 'Unknown'
     };
+  }
+
+  // Add new header fields
+  if (metaEquipment) {
+    result.boring.equipment = metaEquipment;
+  }
+  if (metaLoggedBy) {
+    result.boring.loggedBy = metaLoggedBy;
+  }
+  if (metaDrillingMethod) {
+    result.boring.drillingMethod = metaDrillingMethod;
+  }
+  if (metaDateStart) {
+    result.boring.dateStart = metaDateStart;
+  }
+  if (metaDateComplete) {
+    result.boring.dateComplete = metaDateComplete;
   }
 
   // Add consultant info
@@ -432,6 +489,8 @@ function normalizeColumnName(name) {
 function generateCSVTemplate() {
   const headers = [
     'boring_id', 'project', 'client', 'date', 'time', 'weather',
+    'date_start', 'date_complete',
+    'equipment', 'logged_by', 'drilling_method',
     'consultant_company', 'consultant_contact', 'consultant_phone',
     'driller_company', 'driller_name', 'driller_license',
     'elevation', 'coord_1', 'coord_2', 'coord_system',
@@ -440,7 +499,8 @@ function generateCSVTemplate() {
     'well_screen_top', 'well_screen_bottom', 'well_screen_slot_size',
     'well_filter_pack', 'well_seal_top', 'well_seal_bottom', 'well_seal_material',
     'depth_top', 'depth_bottom', 'uscs', 'description', 'moisture', 'odor', 'pid',
-    'sample_depth', 'sample_type', 'sample_id', 'blow1', 'blow2', 'blow3', 'recovery'
+    'sample_depth', 'sample_depth_top', 'sample_depth_bottom',
+    'sample_type', 'sample_id', 'blow1', 'blow2', 'blow3', 'recovery'
   ];
 
   return headers.join(',');
