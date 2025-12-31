@@ -1,9 +1,8 @@
-boring_id,project,date,driller,elevation,coord_1,coord_2,coord_system,groundwater_depth,groundwater_note,depth_top,depth_bottom,uscs,description,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
-B-2,Highway 101 Widening Project,2025-01-20,Pacific Drilling Inc.,98.2,37.7749,-122.4194,WGS84,8.5,Encountered during drilling,0,4,SM,"Brown silty SAND with trace gravel, loose to medium dense, moist",2,SPT,S-1,3,4,5,18
-B-2,,,,,,,,,,,,,,,,,,,
-B-2,,,,,,,,,,4,10,CL,"Gray lean CLAY, stiff, trace sand, moist",5,SPT,S-2,7,9,11,16
-B-2,,,,,,,,,,,,,8,SPT,S-3,10,12,14,15
-B-2,,,,,,,,,,10,18,SP-SM,"Gray poorly graded SAND with silt, medium dense, saturated",12,SPT,S-4,15,18,20,14
-B-2,,,,,,,,,,,,,15,SPT,S-5,22,25,28,12
-B-2,,,,,,,,,,18,25,GP,"Brown well-graded GRAVEL with sand, dense",20,SPT,S-6,30,35,40,10
-B-2,,,,,,,,,,,,,22,SHELBY,U-1,,,24
+boring_id,project,client,date,time,weather,consultant_company,consultant_contact,consultant_phone,driller_company,driller_name,driller_license,elevation,coord_1,coord_2,coord_system,groundwater_depth,groundwater_note,well_type,well_casing_diameter,well_casing_material,well_screen_top,well_screen_bottom,well_screen_slot_size,well_filter_pack,well_seal_top,well_seal_bottom,well_seal_material,depth_top,depth_bottom,uscs,description,moisture,odor,pid,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
+B-2,Phase II ESA - Industrial Site,State EPA,2025-01-20,09:15,Overcast 58F,Environmental Consultants LLC,Jane Doe PE,555-987-6543,Pacific Drilling Inc,Bob Smith,DRL-98765,98.2,37.7749,-122.4194,WGS84,8.5,During drilling,monitoring,2,PVC,12,22,0.010,8-12 silica,0,11,bentonite grout,0,4,SM,"Brown silty SAND, loose",moist,petroleum,35.2,2,SPT,S-1,3,4,5,18
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,4,10,CL,"Gray lean CLAY, stiff",wet,none,1.2,5,SPT,S-2,7,9,11,16
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,8,SPT,S-3,10,12,14,15
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,10,18,SP-SM,"Gray SAND with silt, medium dense",saturated,chlorinated,89.5,12,SPT,S-4,15,18,20,14
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,15,SPT,S-5,22,25,28,12
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,18,25,GP,"Brown GRAVEL with sand, dense",saturated,none,3.1,20,SPT,S-6,30,35,40,10
+B-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,22,SHELBY,U-1,,,24

@@ -11,27 +11,43 @@ class BoringLog {
     // Default configuration
     this.config = {
       width: 700,
-      headerHeight: 120,
+      headerHeight: 160,
       footerHeight: 40,
       legendHeight: 140,
+      wellPanelWidth: 150,
       showLegend: true,
       depthScale: 20, // pixels per unit depth
       margins: { top: 20, right: 20, bottom: 20, left: 20 },
-      columns: {
-        depth: { width: 50, label: 'Depth' },
-        graphic: { width: 80, label: 'Soil' },
-        uscs: { width: 50, label: 'USCS' },
-        description: { width: 280, label: 'Description' },
-        sample: { width: 60, label: 'Sample' },
-        spt: { width: 80, label: 'SPT N-Value' },
-        recovery: { width: 50, label: 'Rec. (in)' }
+      // Base columns (always shown)
+      baseColumns: {
+        depth: { width: 40, label: 'Depth' },
+        graphic: { width: 60, label: 'Soil' },
+        uscs: { width: 45, label: 'USCS' },
+        description: { width: 200, label: 'Description' },
+        moisture: { width: 50, label: 'Moist.' },
+        sample: { width: 50, label: 'Sample' },
+        spt: { width: 70, label: 'SPT N' },
+        recovery: { width: 45, label: 'Rec.' }
       },
+      // Conditional columns (shown only when data exists)
+      conditionalColumns: {
+        odor: { width: 55, label: 'Odor' },
+        pid: { width: 45, label: 'PID' }
+      },
+      // Moisture options for structured data
+      moistureOptions: ['dry', 'moist', 'wet', 'saturated'],
+      // Odor options
+      odorOptions: ['none', 'petroleum', 'chlorinated', 'organic', 'other'],
       colors: {
         border: '#333',
         headerBg: '#f5f5f5',
         gridLine: '#ccc',
         groundwater: '#0066cc',
-        text: '#333'
+        text: '#333',
+        wellCasing: '#666',
+        wellScreen: '#999',
+        wellSeal: '#8B4513',
+        wellFilter: '#F4A460'
       },
       ...options
     };
@@ -49,10 +65,32 @@ class BoringLog {
   render() {
     if (!this.data) return;
 
-    const { width, headerHeight, footerHeight, legendHeight, showLegend, margins, depthScale, columns } = this.config;
+    const { headerHeight, footerHeight, legendHeight, wellPanelWidth, showLegend, margins, depthScale, baseColumns, conditionalColumns } = this.config;
     const totalDepth = this.data.boring.totalDepth || 30;
     const graphicHeight = totalDepth * depthScale;
     const legendSpace = showLegend ? legendHeight : 0;
+
+    // Determine which conditional columns to show
+    this.activeColumns = { ...baseColumns };
+    const hasOdorData = this.data.layers?.some(l => l.odor && l.odor !== 'none');
+    const hasPidData = this.data.layers?.some(l => l.pid !== undefined && l.pid !== null);
+
+    if (hasOdorData) {
+      this.activeColumns.odor = conditionalColumns.odor;
+    }
+    if (hasPidData) {
+      this.activeColumns.pid = conditionalColumns.pid;
+    }
+
+    // Calculate total columns width
+    const columnsWidth = Object.values(this.activeColumns).reduce((sum, col) => sum + col.width, 0);
+
+    // Check for well data
+    const hasWellData = this.data.well && Object.keys(this.data.well).length > 0;
+    const wellSpace = hasWellData ? wellPanelWidth + 10 : 0;
+
+    // Calculate total width
+    const width = columnsWidth + wellSpace + margins.left + margins.right;
     const height = headerHeight + graphicHeight + footerHeight + legendSpace + margins.top + margins.bottom;
 
     // Clear container
@@ -74,16 +112,22 @@ class BoringLog {
     mainGroup.setAttribute('transform', `translate(${margins.left}, ${margins.top})`);
 
     // Render components
-    this.renderHeader(mainGroup, width - margins.left - margins.right);
+    this.renderHeader(mainGroup, columnsWidth + wellSpace);
     this.renderColumnHeaders(mainGroup, headerHeight - 30);
     this.renderDepthScale(mainGroup, headerHeight, graphicHeight, totalDepth);
     this.renderSoilLayers(mainGroup, headerHeight, graphicHeight, totalDepth);
     this.renderSamples(mainGroup, headerHeight, totalDepth);
     this.renderGroundwater(mainGroup, headerHeight, totalDepth);
-    if (showLegend) {
-      this.renderLegend(mainGroup, headerHeight + graphicHeight + footerHeight, width - margins.left - margins.right);
+
+    // Render well construction panel if data exists
+    if (hasWellData) {
+      this.renderWellPanel(mainGroup, columnsWidth + 10, headerHeight, graphicHeight, totalDepth);
     }
-    this.renderBorder(mainGroup, width - margins.left - margins.right, height - margins.top - margins.bottom);
+
+    if (showLegend) {
+      this.renderLegend(mainGroup, headerHeight + graphicHeight + footerHeight, columnsWidth + wellSpace);
+    }
+    this.renderBorder(mainGroup, columnsWidth + wellSpace, height - margins.top - margins.bottom);
 
     svg.appendChild(mainGroup);
     this.container.appendChild(svg);
@@ -288,55 +332,131 @@ class BoringLog {
 
   renderHeader(parent, width) {
     const { boring, groundwater } = this.data;
-    const { colors } = this.config;
+    const { colors, headerHeight } = this.config;
+    const headerContentHeight = headerHeight - 30; // Leave room for column headers
 
     // Header background
     const headerBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     headerBg.setAttribute('x', '0');
     headerBg.setAttribute('y', '0');
     headerBg.setAttribute('width', width);
-    headerBg.setAttribute('height', '90');
+    headerBg.setAttribute('height', headerContentHeight);
     headerBg.setAttribute('fill', colors.headerBg);
     headerBg.setAttribute('stroke', colors.border);
     parent.appendChild(headerBg);
 
-    // Title
-    const title = this.createText(`BORING LOG: ${boring.id}`, 10, 22, { fontWeight: 'bold', fontSize: '14px' });
+    // Divide header into 3 columns
+    const col1X = 10;
+    const col2X = width / 3;
+    const col3X = (width / 3) * 2;
+    const lineHeight = 14;
+    let y = 18;
+
+    // === Column 1: Project & Site Info ===
+    const title = this.createText(`BORING LOG: ${boring.id}`, col1X, y, { fontWeight: 'bold', fontSize: '13px' });
     parent.appendChild(title);
+    y += lineHeight + 2;
 
-    // Project
-    const project = this.createText(`Project: ${boring.project}`, 10, 40, { fontSize: '11px' });
+    const project = this.createText(`Project: ${boring.project}`, col1X, y, { fontSize: '10px' });
     parent.appendChild(project);
+    y += lineHeight;
 
-    // Location and elevation
-    const locText = boring.location
-      ? `Location: ${boring.location.coords.join(', ')} (${boring.location.system})`
-      : '';
-    const location = this.createText(locText, 10, 55, { fontSize: '10px' });
-    parent.appendChild(location);
+    if (boring.client) {
+      const client = this.createText(`Client: ${boring.client}`, col1X, y, { fontSize: '10px' });
+      parent.appendChild(client);
+      y += lineHeight;
+    }
 
-    const elevation = this.createText(`Elevation: ${boring.elevation} ft`, 10, 70, { fontSize: '10px' });
-    parent.appendChild(elevation);
+    if (boring.location) {
+      const locText = `Location: ${boring.location.coords.join(', ')} (${boring.location.system})`;
+      const location = this.createText(locText, col1X, y, { fontSize: '9px' });
+      parent.appendChild(location);
+      y += lineHeight;
+    }
 
-    // Right side info
-    const date = this.createText(`Date: ${boring.date}`, width - 10, 40, { fontSize: '10px', textAnchor: 'end' });
-    parent.appendChild(date);
+    if (boring.elevation !== undefined) {
+      const elevation = this.createText(`Elevation: ${boring.elevation} ft`, col1X, y, { fontSize: '10px' });
+      parent.appendChild(elevation);
+      y += lineHeight;
+    }
 
-    const driller = this.createText(`Driller: ${boring.driller}`, width - 10, 55, { fontSize: '10px', textAnchor: 'end' });
-    parent.appendChild(driller);
-
-    const totalDepth = this.createText(`Total Depth: ${boring.totalDepth} ft`, width - 10, 70, { fontSize: '10px', textAnchor: 'end' });
-    parent.appendChild(totalDepth);
+    const totalDepthText = this.createText(`Total Depth: ${boring.totalDepth} ft`, col1X, y, { fontSize: '10px' });
+    parent.appendChild(totalDepthText);
 
     if (groundwater && groundwater.depth !== undefined) {
+      y += lineHeight;
       const gwText = `GW Depth: ${groundwater.depth} ft${groundwater.note ? ` (${groundwater.note})` : ''}`;
-      const gw = this.createText(gwText, width - 10, 85, { fontSize: '10px', textAnchor: 'end', fill: colors.groundwater });
+      const gw = this.createText(gwText, col1X, y, { fontSize: '10px', fill: colors.groundwater });
       parent.appendChild(gw);
+    }
+
+    // === Column 2: Consultant Info ===
+    y = 18;
+    if (boring.consultant) {
+      const consultantLabel = this.createText('CONSULTANT', col2X, y, { fontWeight: 'bold', fontSize: '10px' });
+      parent.appendChild(consultantLabel);
+      y += lineHeight;
+
+      if (boring.consultant.company) {
+        const company = this.createText(boring.consultant.company, col2X, y, { fontSize: '10px' });
+        parent.appendChild(company);
+        y += lineHeight;
+      }
+      if (boring.consultant.contact) {
+        const contact = this.createText(boring.consultant.contact, col2X, y, { fontSize: '10px' });
+        parent.appendChild(contact);
+        y += lineHeight;
+      }
+      if (boring.consultant.phone) {
+        const phone = this.createText(boring.consultant.phone, col2X, y, { fontSize: '10px' });
+        parent.appendChild(phone);
+      }
+    }
+
+    // === Column 3: Driller & Date Info ===
+    y = 18;
+    const drillerLabel = this.createText('DRILLER', col3X, y, { fontWeight: 'bold', fontSize: '10px' });
+    parent.appendChild(drillerLabel);
+    y += lineHeight;
+
+    // Handle both old string format and new object format for driller
+    if (typeof boring.driller === 'object') {
+      if (boring.driller.company) {
+        const drillerCo = this.createText(boring.driller.company, col3X, y, { fontSize: '10px' });
+        parent.appendChild(drillerCo);
+        y += lineHeight;
+      }
+      if (boring.driller.name) {
+        const drillerName = this.createText(boring.driller.name, col3X, y, { fontSize: '10px' });
+        parent.appendChild(drillerName);
+        y += lineHeight;
+      }
+      if (boring.driller.license) {
+        const license = this.createText(`License: ${boring.driller.license}`, col3X, y, { fontSize: '9px' });
+        parent.appendChild(license);
+        y += lineHeight;
+      }
+    } else if (boring.driller) {
+      const drillerText = this.createText(boring.driller, col3X, y, { fontSize: '10px' });
+      parent.appendChild(drillerText);
+      y += lineHeight;
+    }
+
+    y += 4;
+    const dateText = boring.time ? `${boring.date} ${boring.time}` : boring.date;
+    const date = this.createText(`Date: ${dateText}`, col3X, y, { fontSize: '10px' });
+    parent.appendChild(date);
+
+    if (boring.weather) {
+      y += lineHeight;
+      const weather = this.createText(`Weather: ${boring.weather}`, col3X, y, { fontSize: '10px' });
+      parent.appendChild(weather);
     }
   }
 
   renderColumnHeaders(parent, y) {
-    const { columns, colors } = this.config;
+    const { colors } = this.config;
+    const columns = this.activeColumns;
     let x = 0;
 
     // Header row background
@@ -361,7 +481,7 @@ class BoringLog {
 
       // Column label
       const label = this.createText(col.label, x + col.width / 2, y + 20, {
-        fontSize: '10px',
+        fontSize: '9px',
         fontWeight: 'bold',
         textAnchor: 'middle'
       });
@@ -372,7 +492,8 @@ class BoringLog {
   }
 
   renderDepthScale(parent, startY, height, totalDepth) {
-    const { columns, colors, depthScale } = this.config;
+    const { colors, depthScale } = this.config;
+    const columns = this.activeColumns;
     const colWidth = columns.depth.width;
 
     // Background
@@ -421,46 +542,84 @@ class BoringLog {
   }
 
   renderSoilLayers(parent, startY, height, totalDepth) {
-    const { columns, colors, depthScale } = this.config;
+    const { colors, depthScale } = this.config;
+    const columns = this.activeColumns;
     const { layers } = this.data;
 
-    const graphicX = columns.depth.width;
-    const uscsX = graphicX + columns.graphic.width;
-    const descX = uscsX + columns.uscs.width;
+    // Calculate column positions dynamically
+    const colPositions = {};
+    let x = 0;
+    for (const [key, col] of Object.entries(columns)) {
+      colPositions[key] = { x, width: col.width };
+      x += col.width;
+    }
 
     for (const layer of layers) {
       const y1 = startY + layer.depthTop * depthScale;
       const y2 = startY + layer.depthBottom * depthScale;
       const layerHeight = y2 - y1;
+      const centerY = y1 + layerHeight / 2 + 4;
 
       // Soil graphic pattern
       const patternId = this.getPatternId(layer.uscs);
       const graphic = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      graphic.setAttribute('x', graphicX);
+      graphic.setAttribute('x', colPositions.graphic.x);
       graphic.setAttribute('y', y1);
-      graphic.setAttribute('width', columns.graphic.width);
+      graphic.setAttribute('width', colPositions.graphic.width);
       graphic.setAttribute('height', layerHeight);
       graphic.setAttribute('fill', `url(#${patternId})`);
       graphic.setAttribute('stroke', colors.border);
       parent.appendChild(graphic);
 
       // USCS label
-      const uscsLabel = this.createText(layer.uscs, uscsX + columns.uscs.width / 2, y1 + layerHeight / 2 + 4, {
-        fontSize: '10px',
+      const uscsLabel = this.createText(layer.uscs, colPositions.uscs.x + colPositions.uscs.width / 2, centerY, {
+        fontSize: '9px',
         fontWeight: 'bold',
         textAnchor: 'middle'
       });
       parent.appendChild(uscsLabel);
 
       // Description (with text wrapping)
-      this.renderWrappedText(parent, layer.description, descX + 5, y1 + 15, columns.description.width - 10, layerHeight - 10);
+      this.renderWrappedText(parent, layer.description, colPositions.description.x + 3, y1 + 12, colPositions.description.width - 6, layerHeight - 8);
+
+      // Moisture
+      if (layer.moisture && colPositions.moisture) {
+        const moistLabel = this.createText(layer.moisture, colPositions.moisture.x + colPositions.moisture.width / 2, centerY, {
+          fontSize: '8px',
+          textAnchor: 'middle'
+        });
+        parent.appendChild(moistLabel);
+      }
+
+      // Odor (conditional column)
+      if (layer.odor && colPositions.odor) {
+        const odorText = layer.odor === 'petroleum' ? 'petrol.' :
+                         layer.odor === 'chlorinated' ? 'chlor.' :
+                         layer.odor === 'organic' ? 'org.' : layer.odor;
+        const odorLabel = this.createText(odorText, colPositions.odor.x + colPositions.odor.width / 2, centerY, {
+          fontSize: '8px',
+          textAnchor: 'middle',
+          fill: layer.odor !== 'none' ? '#c00' : colors.text
+        });
+        parent.appendChild(odorLabel);
+      }
+
+      // PID (conditional column)
+      if (layer.pid !== undefined && colPositions.pid) {
+        const pidLabel = this.createText(layer.pid.toFixed(1), colPositions.pid.x + colPositions.pid.width / 2, centerY, {
+          fontSize: '8px',
+          textAnchor: 'middle',
+          fill: layer.pid > 50 ? '#c00' : colors.text
+        });
+        parent.appendChild(pidLabel);
+      }
 
       // Layer boundary line
       if (layer.depthTop > 0) {
         const boundary = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        boundary.setAttribute('x1', graphicX);
+        boundary.setAttribute('x1', colPositions.graphic.x);
         boundary.setAttribute('y1', y1);
-        boundary.setAttribute('x2', descX + columns.description.width);
+        boundary.setAttribute('x2', colPositions.description.x + colPositions.description.width);
         boundary.setAttribute('y2', y1);
         boundary.setAttribute('stroke', colors.border);
         boundary.setAttribute('stroke-width', '1.5');
@@ -468,54 +627,57 @@ class BoringLog {
       }
     }
 
-    // Column backgrounds for sample/SPT/recovery
-    const sampleX = descX + columns.description.width;
-    const sptX = sampleX + columns.sample.width;
-    const recoveryX = sptX + columns.spt.width;
-
-    [
-      { x: uscsX, w: columns.uscs.width },
-      { x: sampleX, w: columns.sample.width },
-      { x: sptX, w: columns.spt.width },
-      { x: recoveryX, w: columns.recovery.width }
-    ].forEach(({ x, w }) => {
-      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bg.setAttribute('x', x);
-      bg.setAttribute('y', startY);
-      bg.setAttribute('width', w);
-      bg.setAttribute('height', height);
-      bg.setAttribute('fill', 'white');
-      bg.setAttribute('stroke', colors.border);
-      parent.appendChild(bg);
+    // Column backgrounds (for columns after description)
+    const bgColumns = ['uscs', 'moisture', 'odor', 'pid', 'sample', 'spt', 'recovery'];
+    bgColumns.forEach(colName => {
+      if (colPositions[colName]) {
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bg.setAttribute('x', colPositions[colName].x);
+        bg.setAttribute('y', startY);
+        bg.setAttribute('width', colPositions[colName].width);
+        bg.setAttribute('height', height);
+        bg.setAttribute('fill', 'white');
+        bg.setAttribute('stroke', colors.border);
+        parent.appendChild(bg);
+      }
     });
   }
 
   renderSamples(parent, startY, totalDepth) {
-    const { columns, colors, depthScale } = this.config;
+    const { colors, depthScale } = this.config;
+    const columns = this.activeColumns;
     const { samples } = this.data;
 
     if (!samples) return;
 
-    const sampleX = columns.depth.width + columns.graphic.width + columns.uscs.width + columns.description.width;
-    const sptX = sampleX + columns.sample.width;
-    const recoveryX = sptX + columns.spt.width;
+    // Calculate column positions dynamically
+    const colPositions = {};
+    let x = 0;
+    for (const [key, col] of Object.entries(columns)) {
+      colPositions[key] = { x, width: col.width };
+      x += col.width;
+    }
+
+    const sampleX = colPositions.sample.x;
+    const sptX = colPositions.spt.x;
+    const recoveryX = colPositions.recovery.x;
 
     for (const sample of samples) {
       const y = startY + sample.depth * depthScale;
 
       // Sample marker and ID
       const marker = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      marker.setAttribute('x', sampleX + 5);
+      marker.setAttribute('x', sampleX + 3);
       marker.setAttribute('y', y - 8);
-      marker.setAttribute('width', columns.sample.width - 10);
+      marker.setAttribute('width', colPositions.sample.width - 6);
       marker.setAttribute('height', '16');
       marker.setAttribute('fill', sample.type === 'SPT' ? '#fff3cd' : '#d4edda');
       marker.setAttribute('stroke', colors.border);
       marker.setAttribute('rx', '2');
       parent.appendChild(marker);
 
-      const idLabel = this.createText(sample.id, sampleX + columns.sample.width / 2, y + 4, {
-        fontSize: '8px',
+      const idLabel = this.createText(sample.id, sampleX + colPositions.sample.width / 2, y + 4, {
+        fontSize: '7px',
         textAnchor: 'middle'
       });
       parent.appendChild(idLabel);
@@ -525,15 +687,15 @@ class BoringLog {
         const nValue = sample.blows[1] + sample.blows[2];
         const blowsText = sample.blows.join('-');
 
-        const nLabel = this.createText(`N=${nValue}`, sptX + columns.spt.width / 2, y - 2, {
-          fontSize: '10px',
+        const nLabel = this.createText(`N=${nValue}`, sptX + colPositions.spt.width / 2, y - 2, {
+          fontSize: '9px',
           fontWeight: 'bold',
           textAnchor: 'middle'
         });
         parent.appendChild(nLabel);
 
-        const blowsLabel = this.createText(`(${blowsText})`, sptX + columns.spt.width / 2, y + 10, {
-          fontSize: '8px',
+        const blowsLabel = this.createText(`(${blowsText})`, sptX + colPositions.spt.width / 2, y + 9, {
+          fontSize: '7px',
           textAnchor: 'middle',
           fill: '#666'
         });
@@ -542,8 +704,8 @@ class BoringLog {
 
       // Recovery
       if (sample.recovery !== undefined) {
-        const recLabel = this.createText(sample.recovery.toString(), recoveryX + columns.recovery.width / 2, y + 4, {
-          fontSize: '10px',
+        const recLabel = this.createText(sample.recovery.toString(), recoveryX + colPositions.recovery.width / 2, y + 4, {
+          fontSize: '9px',
           textAnchor: 'middle'
         });
         parent.appendChild(recLabel);
@@ -551,7 +713,7 @@ class BoringLog {
 
       // Depth indicator line
       const depthLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      depthLine.setAttribute('x1', columns.depth.width);
+      depthLine.setAttribute('x1', colPositions.depth.width);
       depthLine.setAttribute('y1', y);
       depthLine.setAttribute('x2', sampleX);
       depthLine.setAttribute('y2', y);
@@ -565,7 +727,8 @@ class BoringLog {
     const { groundwater } = this.data;
     if (!groundwater || groundwater.depth === undefined) return;
 
-    const { columns, colors, depthScale } = this.config;
+    const { colors, depthScale } = this.config;
+    const columns = this.activeColumns;
     const y = startY + groundwater.depth * depthScale;
     const graphicX = columns.depth.width;
 
@@ -600,6 +763,146 @@ class BoringLog {
     border.setAttribute('stroke', this.config.colors.border);
     border.setAttribute('stroke-width', '2');
     parent.appendChild(border);
+  }
+
+  renderWellPanel(parent, startX, startY, height, totalDepth) {
+    const { colors, wellPanelWidth, depthScale } = this.config;
+    const { well, boring } = this.data;
+
+    // Panel background
+    const panelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    panelBg.setAttribute('x', startX);
+    panelBg.setAttribute('y', startY);
+    panelBg.setAttribute('width', wellPanelWidth);
+    panelBg.setAttribute('height', height);
+    panelBg.setAttribute('fill', '#fafafa');
+    panelBg.setAttribute('stroke', colors.border);
+    parent.appendChild(panelBg);
+
+    // Panel title
+    const title = this.createText('WELL CONSTRUCTION', startX + wellPanelWidth / 2, startY + 15, {
+      fontSize: '9px',
+      fontWeight: 'bold',
+      textAnchor: 'middle'
+    });
+    parent.appendChild(title);
+
+    // Well diagram area
+    const diagramX = startX + 20;
+    const diagramWidth = 40;
+    const diagramTop = startY + 25;
+    const diagramHeight = height - 50;
+
+    // Calculate positions based on depths
+    const getY = (depth) => diagramTop + (depth / totalDepth) * diagramHeight;
+
+    // Draw borehole
+    const borehole = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    borehole.setAttribute('x', diagramX);
+    borehole.setAttribute('y', diagramTop);
+    borehole.setAttribute('width', diagramWidth);
+    borehole.setAttribute('height', diagramHeight);
+    borehole.setAttribute('fill', '#f0f0f0');
+    borehole.setAttribute('stroke', colors.border);
+    parent.appendChild(borehole);
+
+    // Seal (bentonite) - from top to screen top
+    if (well.sealTop !== undefined && well.sealBottom !== undefined) {
+      const sealY1 = getY(well.sealTop);
+      const sealY2 = getY(well.sealBottom);
+      const seal = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      seal.setAttribute('x', diagramX + 5);
+      seal.setAttribute('y', sealY1);
+      seal.setAttribute('width', diagramWidth - 10);
+      seal.setAttribute('height', sealY2 - sealY1);
+      seal.setAttribute('fill', colors.wellSeal);
+      seal.setAttribute('stroke', colors.border);
+      parent.appendChild(seal);
+
+      // Seal label
+      const sealLabel = this.createText('Seal', startX + wellPanelWidth - 5, (sealY1 + sealY2) / 2 + 4, {
+        fontSize: '7px',
+        textAnchor: 'end'
+      });
+      parent.appendChild(sealLabel);
+    }
+
+    // Filter pack - around screen
+    if (well.screenTop !== undefined && well.screenBottom !== undefined) {
+      const filterY1 = getY(well.screenTop);
+      const filterY2 = getY(well.screenBottom);
+
+      // Filter pack
+      const filter = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      filter.setAttribute('x', diagramX + 5);
+      filter.setAttribute('y', filterY1);
+      filter.setAttribute('width', diagramWidth - 10);
+      filter.setAttribute('height', filterY2 - filterY1);
+      filter.setAttribute('fill', colors.wellFilter);
+      filter.setAttribute('stroke', colors.border);
+      parent.appendChild(filter);
+
+      // Screen (inside filter pack)
+      const screenWidth = 16;
+      const screen = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      screen.setAttribute('x', diagramX + (diagramWidth - screenWidth) / 2);
+      screen.setAttribute('y', filterY1);
+      screen.setAttribute('width', screenWidth);
+      screen.setAttribute('height', filterY2 - filterY1);
+      screen.setAttribute('fill', 'white');
+      screen.setAttribute('stroke', colors.wellScreen);
+      screen.setAttribute('stroke-dasharray', '3,2');
+      parent.appendChild(screen);
+
+      // Screen label
+      const screenLabel = this.createText('Screen', startX + wellPanelWidth - 5, (filterY1 + filterY2) / 2 + 4, {
+        fontSize: '7px',
+        textAnchor: 'end'
+      });
+      parent.appendChild(screenLabel);
+    }
+
+    // Casing (from top to screen)
+    const casingWidth = 16;
+    const casingTop = diagramTop;
+    const casingBottom = well.screenTop !== undefined ? getY(well.screenTop) : diagramTop + diagramHeight * 0.5;
+
+    const casingLeft = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    casingLeft.setAttribute('x1', diagramX + (diagramWidth - casingWidth) / 2);
+    casingLeft.setAttribute('y1', casingTop);
+    casingLeft.setAttribute('x2', diagramX + (diagramWidth - casingWidth) / 2);
+    casingLeft.setAttribute('y2', casingBottom);
+    casingLeft.setAttribute('stroke', colors.wellCasing);
+    casingLeft.setAttribute('stroke-width', '2');
+    parent.appendChild(casingLeft);
+
+    const casingRight = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    casingRight.setAttribute('x1', diagramX + (diagramWidth + casingWidth) / 2);
+    casingRight.setAttribute('y1', casingTop);
+    casingRight.setAttribute('x2', diagramX + (diagramWidth + casingWidth) / 2);
+    casingRight.setAttribute('y2', casingBottom);
+    casingRight.setAttribute('stroke', colors.wellCasing);
+    casingRight.setAttribute('stroke-width', '2');
+    parent.appendChild(casingRight);
+
+    // Well details text
+    const detailsY = startY + height - 20;
+    let detailLine = 0;
+
+    if (well.casingDiameter) {
+      const casingText = this.createText(`Casing: ${well.casingDiameter}" ${well.casingMaterial || ''}`, startX + 5, detailsY - (detailLine * 10), {
+        fontSize: '7px'
+      });
+      parent.appendChild(casingText);
+      detailLine++;
+    }
+
+    if (well.screenSlotSize) {
+      const slotText = this.createText(`Slot: ${well.screenSlotSize}"`, startX + 5, detailsY - (detailLine * 10), {
+        fontSize: '7px'
+      });
+      parent.appendChild(slotText);
+    }
   }
 
   renderLegend(parent, startY, width) {

@@ -40,12 +40,36 @@ function parseBoringLogCSV(csvContent, options = {}) {
   // Track metadata from CSV if present
   let metaBoringId = config.boringId;
   let metaProject = config.project;
+  let metaClient = null;
   let metaDate = config.date;
-  let metaDriller = config.driller;
+  let metaTime = null;
+  let metaWeather = null;
   let metaElevation = null;
   let metaCoord1 = null;
   let metaCoord2 = null;
   let metaCoordSystem = null;
+
+  // Consultant info
+  let consultantCompany = null;
+  let consultantContact = null;
+  let consultantPhone = null;
+
+  // Driller info (can be string or object)
+  let drillerCompany = null;
+  let drillerName = null;
+  let drillerLicense = null;
+
+  // Well construction
+  let wellType = null;
+  let wellCasingDiameter = null;
+  let wellCasingMaterial = null;
+  let wellScreenTop = null;
+  let wellScreenBottom = null;
+  let wellScreenSlotSize = null;
+  let wellFilterPack = null;
+  let wellSealTop = null;
+  let wellSealBottom = null;
+  let wellSealMaterial = null;
 
   // Column index mapping
   const colIndex = {};
@@ -67,18 +91,24 @@ function parseBoringLogCSV(csvContent, options = {}) {
 
   // Process each row
   for (const row of dataRows) {
-    // Extract metadata if present
+    // === Boring metadata ===
     if (colIndex['boring_id'] !== undefined && getCell(row, 'boring_id')) {
       metaBoringId = getCell(row, 'boring_id');
     }
     if (colIndex['project'] !== undefined && getCell(row, 'project')) {
       metaProject = getCell(row, 'project');
     }
+    if (colIndex['client'] !== undefined && getCell(row, 'client')) {
+      metaClient = getCell(row, 'client');
+    }
     if (colIndex['date'] !== undefined && getCell(row, 'date')) {
       metaDate = getCell(row, 'date');
     }
-    if (colIndex['driller'] !== undefined && getCell(row, 'driller')) {
-      metaDriller = getCell(row, 'driller');
+    if (colIndex['time'] !== undefined && getCell(row, 'time')) {
+      metaTime = getCell(row, 'time');
+    }
+    if (colIndex['weather'] !== undefined && getCell(row, 'weather')) {
+      metaWeather = getCell(row, 'weather');
     }
     if (colIndex['elevation'] !== undefined) {
       const elev = getNumericCell(row, 'elevation');
@@ -96,7 +126,33 @@ function parseBoringLogCSV(csvContent, options = {}) {
       metaCoordSystem = getCell(row, 'coord_system');
     }
 
-    // Extract groundwater if present
+    // === Consultant info ===
+    if (colIndex['consultant_company'] !== undefined && getCell(row, 'consultant_company')) {
+      consultantCompany = getCell(row, 'consultant_company');
+    }
+    if (colIndex['consultant_contact'] !== undefined && getCell(row, 'consultant_contact')) {
+      consultantContact = getCell(row, 'consultant_contact');
+    }
+    if (colIndex['consultant_phone'] !== undefined && getCell(row, 'consultant_phone')) {
+      consultantPhone = getCell(row, 'consultant_phone');
+    }
+
+    // === Driller info ===
+    // Support both old format (driller) and new format (driller_company, driller_name, driller_license)
+    if (colIndex['driller'] !== undefined && getCell(row, 'driller')) {
+      drillerName = getCell(row, 'driller');
+    }
+    if (colIndex['driller_company'] !== undefined && getCell(row, 'driller_company')) {
+      drillerCompany = getCell(row, 'driller_company');
+    }
+    if (colIndex['driller_name'] !== undefined && getCell(row, 'driller_name')) {
+      drillerName = getCell(row, 'driller_name');
+    }
+    if (colIndex['driller_license'] !== undefined && getCell(row, 'driller_license')) {
+      drillerLicense = getCell(row, 'driller_license');
+    }
+
+    // === Groundwater ===
     if (colIndex['groundwater_depth'] !== undefined) {
       const gwDepth = getNumericCell(row, 'groundwater_depth');
       if (gwDepth !== null) groundwaterDepth = gwDepth;
@@ -106,7 +162,45 @@ function parseBoringLogCSV(csvContent, options = {}) {
       if (gwNote) groundwaterNote = gwNote;
     }
 
-    // Extract layer data
+    // === Well construction ===
+    if (colIndex['well_type'] !== undefined && getCell(row, 'well_type')) {
+      wellType = getCell(row, 'well_type');
+    }
+    if (colIndex['well_casing_diameter'] !== undefined) {
+      const val = getNumericCell(row, 'well_casing_diameter');
+      if (val !== null) wellCasingDiameter = val;
+    }
+    if (colIndex['well_casing_material'] !== undefined && getCell(row, 'well_casing_material')) {
+      wellCasingMaterial = getCell(row, 'well_casing_material');
+    }
+    if (colIndex['well_screen_top'] !== undefined) {
+      const val = getNumericCell(row, 'well_screen_top');
+      if (val !== null) wellScreenTop = val;
+    }
+    if (colIndex['well_screen_bottom'] !== undefined) {
+      const val = getNumericCell(row, 'well_screen_bottom');
+      if (val !== null) wellScreenBottom = val;
+    }
+    if (colIndex['well_screen_slot_size'] !== undefined) {
+      const val = getNumericCell(row, 'well_screen_slot_size');
+      if (val !== null) wellScreenSlotSize = val;
+    }
+    if (colIndex['well_filter_pack'] !== undefined && getCell(row, 'well_filter_pack')) {
+      wellFilterPack = getCell(row, 'well_filter_pack');
+    }
+    if (colIndex['well_seal_top'] !== undefined) {
+      const val = getNumericCell(row, 'well_seal_top');
+      if (val !== null) wellSealTop = val;
+    }
+    if (colIndex['well_seal_bottom'] !== undefined) {
+      const val = getNumericCell(row, 'well_seal_bottom');
+      if (val !== null) wellSealBottom = val;
+    }
+    if (colIndex['well_seal_material'] !== undefined && getCell(row, 'well_seal_material')) {
+      wellSealMaterial = getCell(row, 'well_seal_material');
+    }
+
+    // === Layer data ===
     const depthTop = getNumericCell(row, 'depth_top');
     const depthBottom = getNumericCell(row, 'depth_bottom');
     const uscs = getCell(row, 'uscs');
@@ -116,17 +210,37 @@ function parseBoringLogCSV(csvContent, options = {}) {
       // Check for duplicate layer
       const existingLayer = layers.find(l => l.depthTop === depthTop && l.depthBottom === depthBottom);
       if (!existingLayer) {
-        layers.push({
+        const layer = {
           depthTop,
           depthBottom,
           uscs: uscs.toUpperCase(),
           description: description || `${uscs} soil`
-        });
+        };
+
+        // Moisture (structured)
+        const moisture = getCell(row, 'moisture');
+        if (moisture) {
+          layer.moisture = moisture.toLowerCase();
+        }
+
+        // Odor
+        const odor = getCell(row, 'odor');
+        if (odor) {
+          layer.odor = odor.toLowerCase();
+        }
+
+        // PID reading
+        const pid = getNumericCell(row, 'pid');
+        if (pid !== null) {
+          layer.pid = pid;
+        }
+
+        layers.push(layer);
         maxDepth = Math.max(maxDepth, depthBottom);
       }
     }
 
-    // Extract sample data
+    // === Sample data ===
     const sampleDepth = getNumericCell(row, 'sample_depth');
     const sampleType = getCell(row, 'sample_type');
     const sampleId = getCell(row, 'sample_id');
@@ -173,18 +287,25 @@ function parseBoringLogCSV(csvContent, options = {}) {
       id: metaBoringId,
       project: metaProject,
       date: metaDate,
-      driller: metaDriller,
       totalDepth: maxDepth || 30
     },
     layers,
     samples
   };
 
-  // Add optional fields
+  // Add optional boring fields
+  if (metaClient) {
+    result.boring.client = metaClient;
+  }
+  if (metaTime) {
+    result.boring.time = metaTime;
+  }
+  if (metaWeather) {
+    result.boring.weather = metaWeather;
+  }
   if (metaElevation !== null) {
     result.boring.elevation = metaElevation;
   }
-
   if (metaCoord1 !== null && metaCoord2 !== null) {
     result.boring.location = {
       coords: [metaCoord1, metaCoord2],
@@ -192,6 +313,27 @@ function parseBoringLogCSV(csvContent, options = {}) {
     };
   }
 
+  // Add consultant info
+  if (consultantCompany || consultantContact || consultantPhone) {
+    result.boring.consultant = {};
+    if (consultantCompany) result.boring.consultant.company = consultantCompany;
+    if (consultantContact) result.boring.consultant.contact = consultantContact;
+    if (consultantPhone) result.boring.consultant.phone = consultantPhone;
+  }
+
+  // Add driller info
+  if (drillerCompany || drillerLicense) {
+    // Use object format if we have company or license
+    result.boring.driller = {};
+    if (drillerCompany) result.boring.driller.company = drillerCompany;
+    if (drillerName) result.boring.driller.name = drillerName;
+    if (drillerLicense) result.boring.driller.license = drillerLicense;
+  } else if (drillerName) {
+    // Use simple string format for backward compatibility
+    result.boring.driller = drillerName;
+  }
+
+  // Add groundwater
   if (groundwaterDepth !== null) {
     result.groundwater = {
       depth: groundwaterDepth
@@ -199,6 +341,21 @@ function parseBoringLogCSV(csvContent, options = {}) {
     if (groundwaterNote) {
       result.groundwater.note = groundwaterNote;
     }
+  }
+
+  // Add well construction
+  if (wellType || wellCasingDiameter !== null || wellScreenTop !== null) {
+    result.well = {};
+    if (wellType) result.well.type = wellType;
+    if (wellCasingDiameter !== null) result.well.casingDiameter = wellCasingDiameter;
+    if (wellCasingMaterial) result.well.casingMaterial = wellCasingMaterial;
+    if (wellScreenTop !== null) result.well.screenTop = wellScreenTop;
+    if (wellScreenBottom !== null) result.well.screenBottom = wellScreenBottom;
+    if (wellScreenSlotSize !== null) result.well.screenSlotSize = wellScreenSlotSize;
+    if (wellFilterPack) result.well.filterPack = wellFilterPack;
+    if (wellSealTop !== null) result.well.sealTop = wellSealTop;
+    if (wellSealBottom !== null) result.well.sealBottom = wellSealBottom;
+    if (wellSealMaterial) result.well.sealMaterial = wellSealMaterial;
   }
 
   return result;
@@ -270,15 +427,23 @@ function normalizeColumnName(name) {
 }
 
 /**
- * Generate sample CSV template
+ * Generate sample CSV template with all fields
  */
 function generateCSVTemplate() {
-  return `boring_id,project,date,driller,elevation,coord_1,coord_2,coord_system,groundwater_depth,groundwater_note,depth_top,depth_bottom,uscs,description,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
-B-1,Site Investigation Project,2025-01-15,ABC Drilling,125.5,34.0522,-118.2437,WGS84,12.5,Stabilized after 24 hrs,0,3.5,SM,"Brown silty SAND, fine grained, loose, moist",2,SPT,S-1,4,5,6,18
-B-1,,,,,,,,,,,,,5,SPT,S-2,8,10,12,16
-B-1,,,,,,,,,,3.5,12,CL,"Gray lean CLAY, stiff, moist to wet",10,SPT,S-3,12,14,15,14
-B-1,,,,,,,,,,12,30,SP,"Gray-brown poorly graded SAND, medium dense, saturated",15,SPT,S-4,18,20,22,12
-B-1,,,,,,,,,,,,,25,SHELBY,U-1,,,24`;
+  const headers = [
+    'boring_id', 'project', 'client', 'date', 'time', 'weather',
+    'consultant_company', 'consultant_contact', 'consultant_phone',
+    'driller_company', 'driller_name', 'driller_license',
+    'elevation', 'coord_1', 'coord_2', 'coord_system',
+    'groundwater_depth', 'groundwater_note',
+    'well_type', 'well_casing_diameter', 'well_casing_material',
+    'well_screen_top', 'well_screen_bottom', 'well_screen_slot_size',
+    'well_filter_pack', 'well_seal_top', 'well_seal_bottom', 'well_seal_material',
+    'depth_top', 'depth_bottom', 'uscs', 'description', 'moisture', 'odor', 'pid',
+    'sample_depth', 'sample_type', 'sample_id', 'blow1', 'blow2', 'blow3', 'recovery'
+  ];
+
+  return headers.join(',');
 }
 
 // Export for module systems
