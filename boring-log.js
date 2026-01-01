@@ -114,7 +114,7 @@ class BoringLog {
 
     // Render components
     this.renderHeader(mainGroup, columnsWidth + wellSpace);
-    this.renderColumnHeaders(mainGroup, headerHeight - 30);
+    this.renderColumnHeaders(mainGroup, headerHeight - 30, hasWellData);
     this.renderDepthScale(mainGroup, headerHeight, graphicHeight, totalDepth);
     this.renderSoilLayers(mainGroup, headerHeight, graphicHeight, totalDepth);
     this.renderSamples(mainGroup, headerHeight, totalDepth);
@@ -605,16 +605,18 @@ class BoringLog {
     }
   }
 
-  renderColumnHeaders(parent, y) {
-    const { colors } = this.config;
+  renderColumnHeaders(parent, y, hasWellData = false) {
+    const { colors, wellPanelWidth } = this.config;
     const columns = this.activeColumns;
     let x = 0;
+    const columnsWidth = Object.values(columns).reduce((sum, col) => sum + col.width, 0);
+    const totalWidth = columnsWidth + (hasWellData ? wellPanelWidth + 10 : 0);
 
     // Header row background
     const headerRow = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     headerRow.setAttribute('x', '0');
     headerRow.setAttribute('y', y);
-    headerRow.setAttribute('width', Object.values(columns).reduce((sum, col) => sum + col.width, 0));
+    headerRow.setAttribute('width', totalWidth);
     headerRow.setAttribute('height', '30');
     headerRow.setAttribute('fill', '#e8e8e8');
     headerRow.setAttribute('stroke', colors.border);
@@ -639,6 +641,25 @@ class BoringLog {
       parent.appendChild(label);
 
       x += col.width;
+    }
+
+    // Well column header if well data exists
+    if (hasWellData) {
+      const wellX = columnsWidth + 10;
+      const sep = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      sep.setAttribute('x1', wellX);
+      sep.setAttribute('y1', y);
+      sep.setAttribute('x2', wellX);
+      sep.setAttribute('y2', y + 30);
+      sep.setAttribute('stroke', colors.border);
+      parent.appendChild(sep);
+
+      const label = this.createText('Well', wellX + wellPanelWidth / 2, y + 20, {
+        fontSize: '9px',
+        fontWeight: 'bold',
+        textAnchor: 'middle'
+      });
+      parent.appendChild(label);
     }
   }
 
@@ -973,7 +994,7 @@ class BoringLog {
     const { colors, wellPanelWidth, depthScale } = this.config;
     const { well, boring } = this.data;
 
-    // Panel background
+    // Panel background - full height to match soil columns
     const panelBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     panelBg.setAttribute('x', startX);
     panelBg.setAttribute('y', startY);
@@ -983,21 +1004,13 @@ class BoringLog {
     panelBg.setAttribute('stroke', colors.border);
     parent.appendChild(panelBg);
 
-    // Panel title
-    const title = this.createText('WELL CONSTRUCTION', startX + wellPanelWidth / 2, startY + 15, {
-      fontSize: '9px',
-      fontWeight: 'bold',
-      textAnchor: 'middle'
-    });
-    parent.appendChild(title);
-
-    // Well diagram area
+    // Well diagram area - spans full height to align with depth scale
     const diagramX = startX + 20;
     const diagramWidth = 40;
-    const diagramTop = startY + 25;
-    const diagramHeight = height - 50;
+    const diagramTop = startY;
+    const diagramHeight = height;
 
-    // Calculate positions based on depths
+    // Calculate positions based on depths - now aligns with soil column depths
     const getY = (depth) => diagramTop + (depth / totalDepth) * diagramHeight;
 
     // Draw borehole
@@ -1089,23 +1102,29 @@ class BoringLog {
     casingRight.setAttribute('stroke-width', '2');
     parent.appendChild(casingRight);
 
-    // Well details text
-    const detailsY = startY + height - 20;
-    let detailLine = 0;
+    // Well details as side labels
+    const labelX = startX + wellPanelWidth - 5;
 
+    // Casing label near top
     if (well.casingDiameter) {
-      const casingText = this.createText(`Casing: ${well.casingDiameter}" ${well.casingMaterial || ''}`, startX + 5, detailsY - (detailLine * 10), {
-        fontSize: '7px'
+      const casingY = casingTop + 20;
+      const casingText = `${well.casingDiameter}" ${well.casingMaterial || ''}`;
+      const casingLabel = this.createText(casingText, labelX, casingY, {
+        fontSize: '7px',
+        textAnchor: 'end'
       });
-      parent.appendChild(casingText);
-      detailLine++;
+      parent.appendChild(casingLabel);
     }
 
-    if (well.screenSlotSize) {
-      const slotText = this.createText(`Slot: ${well.screenSlotSize}"`, startX + 5, detailsY - (detailLine * 10), {
-        fontSize: '7px'
+    // Slot size label near screen
+    if (well.screenSlotSize && well.screenTop !== undefined) {
+      const slotY = getY(well.screenTop) + 15;
+      const slotLabel = this.createText(`Slot: ${well.screenSlotSize}"`, labelX, slotY, {
+        fontSize: '6px',
+        textAnchor: 'end',
+        fill: '#666'
       });
-      parent.appendChild(slotText);
+      parent.appendChild(slotLabel);
     }
   }
 
