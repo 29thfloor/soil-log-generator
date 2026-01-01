@@ -934,7 +934,7 @@ class BoringLog {
     const { colors, depthScale } = this.config;
     const columns = this.activeColumns;
     const y = startY + groundwater.depth * depthScale;
-    const graphicX = columns.depth.width;
+    const graphicX = columns.depth.width + columns.elevation.width;
 
     // Triangle marker on left side of graphic column
     const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
