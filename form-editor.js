@@ -10,6 +10,7 @@ class FormEditor {
     this.data = null;
     this.sections = [];
     this.expandedSections = new Set(['boring']); // Default expanded section
+    this.errors = {}; // Validation errors by path
 
     this.init();
   }
@@ -44,6 +45,21 @@ class FormEditor {
     if (!this.data) {
       this.container.innerHTML = '<p class="form-empty">No data loaded</p>';
       return;
+    }
+
+    // Run validation
+    this.validate();
+
+    // Show validation summary if there are errors
+    const errorList = Object.values(this.errors);
+    if (errorList.length > 0) {
+      const summary = document.createElement('div');
+      summary.className = 'validation-summary';
+      summary.innerHTML = `
+        <div class="validation-summary-title">Validation Issues (${errorList.length})</div>
+        <ul>${errorList.map(e => `<li>${e}</li>`).join('')}</ul>
+      `;
+      this.container.appendChild(summary);
     }
 
     // Render each accordion section
@@ -170,6 +186,16 @@ class FormEditor {
     });
 
     field.appendChild(input);
+
+    // Show inline error if exists for this path
+    if (this.errors[path]) {
+      field.classList.add('has-error');
+      const errorEl = document.createElement('div');
+      errorEl.className = 'field-error';
+      errorEl.textContent = this.errors[path];
+      field.appendChild(errorEl);
+    }
+
     return field;
   }
 
@@ -195,6 +221,65 @@ class FormEditor {
 
     // Update preview
     this.updatePreview();
+
+    // Re-validate and update inline errors without full re-render
+    this.validate();
+    this.updateFieldErrors();
+  }
+
+  updateFieldErrors() {
+    // Update error state on all fields without full re-render
+    this.container.querySelectorAll('.form-field').forEach(field => {
+      const input = field.querySelector('input, select, textarea');
+      if (!input) return;
+
+      const path = input.dataset.path;
+      const existingError = field.querySelector('.field-error');
+
+      if (this.errors[path]) {
+        field.classList.add('has-error');
+        if (existingError) {
+          existingError.textContent = this.errors[path];
+        } else {
+          const errorEl = document.createElement('div');
+          errorEl.className = 'field-error';
+          errorEl.textContent = this.errors[path];
+          field.appendChild(errorEl);
+        }
+      } else {
+        field.classList.remove('has-error');
+        if (existingError) {
+          existingError.remove();
+        }
+      }
+    });
+
+    // Update validation summary
+    this.updateValidationSummary();
+  }
+
+  updateValidationSummary() {
+    const existingSummary = this.container.querySelector('.validation-summary');
+    const errorList = Object.values(this.errors);
+
+    if (errorList.length === 0) {
+      if (existingSummary) existingSummary.remove();
+      return;
+    }
+
+    const summaryHtml = `
+      <div class="validation-summary-title">Validation Issues (${errorList.length})</div>
+      <ul>${errorList.map(e => `<li>${e}</li>`).join('')}</ul>
+    `;
+
+    if (existingSummary) {
+      existingSummary.innerHTML = summaryHtml;
+    } else {
+      const summary = document.createElement('div');
+      summary.className = 'validation-summary';
+      summary.innerHTML = summaryHtml;
+      this.container.insertBefore(summary, this.container.firstChild);
+    }
   }
 
   setValueAtPath(path, value) {
@@ -605,5 +690,103 @@ class FormEditor {
     grid.appendChild(this.createField('Seal Material', well.sealMaterial, 'well.sealMaterial'));
 
     container.appendChild(grid);
+  }
+
+  // Validation
+  validate() {
+    this.errors = {};
+
+    if (!this.data) return;
+
+    const boring = this.data.boring || {};
+    const layers = this.data.layers || [];
+    const samples = this.data.samples || [];
+    const well = this.data.well || {};
+    const totalDepth = boring.totalDepth;
+
+    // Boring validation
+    if (!boring.id || boring.id.trim() === '') {
+      this.errors['boring.id'] = 'Boring ID is required';
+    }
+
+    if (!totalDepth || totalDepth <= 0) {
+      this.errors['boring.totalDepth'] = 'Total depth must be greater than 0';
+    }
+
+    // Layer validation
+    layers.forEach((layer, i) => {
+      const prefix = `layers[${i}]`;
+
+      if (layer.depthTop === undefined || layer.depthTop === '') {
+        this.errors[`${prefix}.depthTop`] = 'Required';
+      }
+
+      if (layer.depthBottom === undefined || layer.depthBottom === '') {
+        this.errors[`${prefix}.depthBottom`] = 'Required';
+      }
+
+      if (layer.depthTop !== undefined && layer.depthBottom !== undefined) {
+        if (layer.depthBottom <= layer.depthTop) {
+          this.errors[`${prefix}.depthBottom`] = 'Must be greater than top';
+        }
+
+        if (totalDepth && layer.depthBottom > totalDepth) {
+          this.errors[`${prefix}.depthBottom`] = `Exceeds total depth (${totalDepth} ft)`;
+        }
+      }
+
+      if (!layer.uscs || layer.uscs.trim() === '') {
+        this.errors[`${prefix}.uscs`] = 'USCS is required';
+      }
+    });
+
+    // Check for layer overlaps
+    const sortedLayers = [...layers].sort((a, b) => (a.depthTop || 0) - (b.depthTop || 0));
+    for (let i = 1; i < sortedLayers.length; i++) {
+      const prev = sortedLayers[i - 1];
+      const curr = sortedLayers[i];
+      if (prev.depthBottom > curr.depthTop) {
+        const currIndex = layers.indexOf(curr);
+        this.errors[`layers[${currIndex}].depthTop`] = 'Overlaps with previous layer';
+      }
+    }
+
+    // Sample validation
+    samples.forEach((sample, i) => {
+      const prefix = `samples[${i}]`;
+
+      if (sample.depthTop !== undefined && sample.depthBottom !== undefined) {
+        if (sample.depthBottom <= sample.depthTop) {
+          this.errors[`${prefix}.depthBottom`] = 'Must be greater than top';
+        }
+
+        if (totalDepth && sample.depthBottom > totalDepth) {
+          this.errors[`${prefix}.depthBottom`] = `Exceeds total depth (${totalDepth} ft)`;
+        }
+      }
+
+      if (!sample.type || sample.type.trim() === '') {
+        this.errors[`${prefix}.type`] = 'Sample type is required';
+      }
+    });
+
+    // Well validation
+    if (well.screenTop !== undefined && well.screenBottom !== undefined) {
+      if (well.screenBottom <= well.screenTop) {
+        this.errors['well.screenBottom'] = 'Must be greater than screen top';
+      }
+
+      if (totalDepth && well.screenBottom > totalDepth) {
+        this.errors['well.screenBottom'] = `Exceeds total depth (${totalDepth} ft)`;
+      }
+    }
+
+    if (well.sealTop !== undefined && well.sealBottom !== undefined) {
+      if (well.sealBottom <= well.sealTop) {
+        this.errors['well.sealBottom'] = 'Must be greater than seal top';
+      }
+    }
+
+    return Object.keys(this.errors).length === 0;
   }
 }

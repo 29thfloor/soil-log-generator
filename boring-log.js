@@ -712,7 +712,7 @@ class BoringLog {
       parent.appendChild(depthLabel);
 
       // Elevation label (if surface elevation is known)
-      if (surfaceElevation !== undefined) {
+      if (surfaceElevation != null) {
         const elev = (surfaceElevation - d).toFixed(1);
         const elevLabel = this.createText(elev, depthColWidth + elevColWidth / 2, y + 4, {
           fontSize: '8px',
@@ -799,7 +799,7 @@ class BoringLog {
       }
 
       // PID (conditional column)
-      if (layer.pid !== undefined && colPositions.pid) {
+      if (layer.pid != null && colPositions.pid) {
         const pidLabel = this.createText(layer.pid.toFixed(1), colPositions.pid.x + colPositions.pid.width / 2, centerY, {
           fontSize: '8px',
           textAnchor: 'middle',
