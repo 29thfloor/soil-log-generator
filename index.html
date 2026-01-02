@@ -168,6 +168,193 @@
     .tab-content.active {
       display: block;
     }
+
+    /* Form Editor Styles */
+    .form-editor {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .accordion-section {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #f9fafb;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .accordion-header:hover {
+      background: #f3f4f6;
+    }
+
+    .accordion-header.expanded {
+      background: #eff6ff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .accordion-icon {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    .accordion-label {
+      flex: 1;
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 12px;
+    }
+
+    .accordion-content.expanded {
+      display: block;
+    }
+
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-row > .form-field {
+      flex: 1;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-field label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-field textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-subsection-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #374151;
+      margin-top: 8px;
+    }
+
+    .form-grid hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 8px 0;
+    }
+
+    .form-empty {
+      color: #9ca3af;
+      font-size: 0.85rem;
+      font-style: italic;
+      text-align: center;
+      padding: 12px;
+    }
+
+    /* Card styles for layers/samples */
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .card-title {
+      flex: 1;
+    }
+
+    .card-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 8px;
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px dashed #d1d5db;
+      margin-bottom: 10px;
+    }
+
+    .btn-add:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+
+    .btn-delete {
+      padding: 2px 8px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-delete:hover {
+      background: #fecaca;
+    }
+
+    /* Responsive layout for form mode */
+    @media (min-width: 1200px) {
+      .container.form-mode {
+        grid-template-columns: 450px 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -176,11 +363,17 @@
       <h1>Boring Log Generator</h1>
 
       <div class="tabs">
-        <button class="tab active" data-tab="csv">CSV Import</button>
+        <button class="tab active" data-tab="form">Form</button>
+        <button class="tab" data-tab="csv">CSV Import</button>
         <button class="tab" data-tab="json">JSON Editor</button>
       </div>
 
-      <div id="csv-tab" class="tab-content active">
+      <div id="form-tab" class="tab-content active">
+        <h2>Edit Data</h2>
+        <div id="form-editor-container"></div>
+      </div>
+
+      <div id="csv-tab" class="tab-content">
         <h2>Import from CSV</h2>
         <div class="controls">
           <div>
@@ -229,8 +422,9 @@
     </div>
   </div>
 
-  <script src="csv-parser.js?v=8"></script>
-  <script src="boring-log.js?v=8"></script>
+  <script src="csv-parser.js?v=9"></script>
+  <script src="boring-log.js?v=9"></script>
+  <script src="form-editor.js?v=9"></script>
   <script>
     // Sample data for demonstration
     const sampleData = {
@@ -339,13 +533,36 @@
     const boringLog = new BoringLog(container);
     const jsonEditor = document.getElementById('json-editor');
 
+    // Initialize form editor
+    const formEditorContainer = document.getElementById('form-editor-container');
+    const formEditor = new FormEditor(formEditorContainer, boringLog);
+
     // Load sample data on init
     boringLog.setData(sampleData);
     jsonEditor.value = JSON.stringify(sampleData, null, 2);
+    formEditor.setData(sampleData);
 
-    // Tab switching
+    // Tab switching with data sync
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
+        const currentTab = document.querySelector('.tab.active').dataset.tab;
+        const newTab = tab.dataset.tab;
+
+        // Sync data when switching tabs
+        if (currentTab === 'form' && newTab !== 'form') {
+          // Form -> other: update JSON editor with form data
+          const data = formEditor.getData();
+          jsonEditor.value = JSON.stringify(data, null, 2);
+        } else if (currentTab === 'json' && newTab === 'form') {
+          // JSON -> Form: parse JSON and update form
+          try {
+            const data = JSON.parse(jsonEditor.value);
+            formEditor.setData(data);
+          } catch (e) {
+            // If JSON is invalid, keep form data as-is
+          }
+        }
+
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
@@ -357,6 +574,7 @@
     document.getElementById('load-sample').addEventListener('click', () => {
       boringLog.setData(sampleData);
       jsonEditor.value = JSON.stringify(sampleData, null, 2);
+      formEditor.setData(sampleData);
       document.getElementById('csv-error').style.display = 'none';
     });
 
@@ -371,6 +589,7 @@
           const data = parseBoringLogCSV(event.target.result);
           boringLog.setData(data);
           jsonEditor.value = JSON.stringify(data, null, 2);
+          formEditor.setData(data);
           document.getElementById('csv-error').style.display = 'none';
         } catch (err) {
           document.getElementById('csv-error').textContent = 'Error parsing CSV: ' + err.message;
@@ -385,6 +604,7 @@
       try {
         const data = JSON.parse(jsonEditor.value);
         boringLog.setData(data);
+        formEditor.setData(data);
         document.getElementById('json-error').style.display = 'none';
       } catch (err) {
         document.getElementById('json-error').textContent = 'Invalid JSON: ' + err.message;
