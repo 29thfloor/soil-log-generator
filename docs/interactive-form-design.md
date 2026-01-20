@@ -459,6 +459,38 @@ Depth Top: [abc    ]
 - Warning icons on affected elements
 - Tooltip with error details
 
+### Implemented Validation Rules
+
+#### Boring Section
+| Field | Rule |
+|-------|------|
+| Boring ID | Required (non-empty) |
+| Total Depth | Must be greater than 0 |
+
+#### Layers Section
+| Field | Rule |
+|-------|------|
+| Depth Top | Required |
+| Depth Bottom | Required |
+| Depth Bottom | Must be greater than Depth Top |
+| Depth Bottom | Cannot exceed boring total depth |
+| USCS | Required |
+| (Cross-layer) | Layers cannot overlap |
+
+#### Samples Section
+| Field | Rule |
+|-------|------|
+| Depth Bottom | Must be greater than Depth Top (if both defined) |
+| Depth Bottom | Cannot exceed boring total depth |
+| Sample Type | Required |
+
+#### Well Section
+| Field | Rule |
+|-------|------|
+| Screen Bottom | Must be greater than Screen Top |
+| Screen Bottom | Cannot exceed boring total depth |
+| Seal Bottom | Must be greater than Seal Top |
+
 ---
 
 ## 6. Recommendation
@@ -489,42 +521,42 @@ The following options were selected:
 
 ## Implementation Plan
 
-### Phase 1: Foundation
-- [ ] Create form container with responsive split/stacked layout
-- [ ] Add accordion component for section management
-- [ ] Set up data binding (form ↔ boringLog data)
-- [ ] Implement blur-triggered preview updates
+### Phase 1: Foundation ✅
+- [x] Create form container with responsive split/stacked layout
+- [x] Add accordion component for section management
+- [x] Set up data binding (form ↔ boringLog data)
+- [x] Implement blur-triggered preview updates
 
-### Phase 2: Boring Metadata Section
-- [ ] Basic fields: ID, project, client
-- [ ] Date fields (single date or start/complete)
-- [ ] Location fields with coordinate system
-- [ ] Equipment, method, logged by fields
+### Phase 2: Boring Metadata Section ✅
+- [x] Basic fields: ID, project, client
+- [x] Date fields (single date or start/complete)
+- [x] Location fields with coordinate system
+- [x] Equipment, method, logged by fields
 
-### Phase 3: People Section
-- [ ] Consultant fields (company, contact, phone)
-- [ ] Driller fields (company, name, license)
+### Phase 3: People Section ✅
+- [x] Consultant fields (company, contact, phone)
+- [x] Driller fields (company, name, license)
 
-### Phase 4: Soil Layers Section
-- [ ] Card component for individual layers
-- [ ] Add/remove layer functionality
-- [ ] USCS dropdown with pattern preview
-- [ ] Depth validation (no overlaps)
+### Phase 4: Soil Layers Section (in progress)
+- [x] Card component for individual layers
+- [x] Add/remove layer functionality
+- [x] USCS dropdown with pattern preview
+- [x] Depth validation (no overlaps)
 - [ ] Drag-to-reorder layers
 
-### Phase 5: Samples Section
-- [ ] Card component for samples
-- [ ] Support both single depth and depth range
-- [ ] SPT blows input (3 fields)
-- [ ] Sample type dropdown
+### Phase 5: Samples Section ✅
+- [x] Card component for samples
+- [x] Support both single depth and depth range
+- [x] SPT blows input (3 fields)
+- [x] Sample type dropdown
 
-### Phase 6: Groundwater & Well
-- [ ] Groundwater depth and notes
-- [ ] Well construction fields
-- [ ] Visual validation (screen within boring depth, etc.)
+### Phase 6: Groundwater & Well ✅
+- [x] Groundwater depth and notes
+- [x] Well construction fields
+- [x] Visual validation (screen within boring depth, etc.)
 
-### Phase 7: Polish
-- [ ] Validation summary panel
+### Phase 7: Polish (in progress)
+- [x] Validation summary panel
 - [ ] Keyboard navigation
 - [ ] Mobile responsiveness testing
 - [ ] Accessibility review
