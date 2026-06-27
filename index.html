@@ -20,101 +20,107 @@
       max-width: 1400px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 350px 1fr;
+      grid-template-columns: 380px 1fr;
       gap: 20px;
+      height: calc(100vh - 40px);
     }
 
     .panel {
       background: white;
       border-radius: 8px;
-      padding: 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       overflow: hidden;
     }
 
-    h1 {
-      margin: 0 0 20px 0;
-      font-size: 1.5rem;
-      color: #333;
-    }
-
-    h2 {
-      margin: 0 0 15px 0;
-      font-size: 1.1rem;
-      color: #555;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
-
-    .controls {
+    /* Sidebar */
+    .sidebar {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      overflow: hidden;
     }
 
-    label {
-      font-size: 0.85rem;
-      color: #666;
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      border: 2px dashed #ccc;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    input[type="file"]:hover {
-      border-color: #999;
-    }
-
-    button {
-      padding: 10px 20px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    button.secondary {
-      background: #6b7280;
-    }
-
-    button.secondary:hover {
-      background: #4b5563;
-    }
-
-    .button-group {
+    .sidebar-toolbar {
       display: flex;
-      gap: 10px;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+      flex-shrink: 0;
     }
 
-    textarea {
-      width: 100%;
-      height: 300px;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 0.75rem;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      resize: vertical;
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .toolbar-separator {
+      width: 1px;
+      height: 20px;
+      background: #d1d5db;
+      margin: 0 6px;
+    }
+
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 30px;
+      padding: 0 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-family: inherit;
+      gap: 4px;
+      transition: all 0.1s ease;
+    }
+
+    .toolbar-btn:hover {
+      background: #e5e7eb;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+
+    .toolbar-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-spacer {
+      flex: 1;
+    }
+
+    /* Preview panel */
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .preview-panel h2 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #999;
+      padding: 10px 16px;
+      border-bottom: 1px solid #eee;
+      flex-shrink: 0;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
 
     #log-container {
-      min-height: 600px;
+      flex: 1;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       overflow: auto;
+      padding: 16px;
     }
 
     #log-container svg {
@@ -122,59 +128,12 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
-    .csv-template {
-      font-size: 0.75rem;
-      color: #666;
-      background: #f9f9f9;
-      padding: 10px;
-      border-radius: 4px;
-      overflow-x: auto;
-      white-space: pre;
-      font-family: monospace;
-    }
-
-    .error {
-      color: #dc2626;
-      font-size: 0.85rem;
-      padding: 10px;
-      background: #fef2f2;
-      border-radius: 4px;
-      margin-top: 10px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 15px;
-    }
-
-    .tab {
-      padding: 8px 16px;
-      background: #e5e7eb;
-      border: none;
-      border-radius: 6px 6px 0 0;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-
-    .tab.active {
-      background: #2563eb;
-      color: white;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
     /* Form Editor Styles */
     .form-editor {
-      max-height: 500px;
+      flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
+      padding: 12px;
     }
 
     .accordion-section {
@@ -335,6 +294,10 @@
       background: #f3f4f6;
       color: #374151;
       border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: inherit;
       margin-bottom: 10px;
     }
 
@@ -405,82 +368,255 @@
       margin-bottom: 2px;
     }
 
-    /* Responsive layout for form mode */
-    @media (min-width: 1200px) {
-      .container.form-mode {
-        grid-template-columns: 450px 1fr;
-      }
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 520px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      animation: modalIn 0.15s ease-out;
+    }
+
+    .modal-wide {
+      max-width: 680px;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: #f3f4f6;
+      color: #111;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .modal-body label {
+      font-size: 0.85rem;
+      color: #666;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .modal-body input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .modal-body input[type="file"]:hover {
+      border-color: #999;
+    }
+
+    .modal-body button {
+      padding: 10px 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    .modal-body button:hover {
+      background: #1d4ed8;
+    }
+
+    .modal-body button.secondary {
+      background: #6b7280;
+    }
+
+    .modal-body button.secondary:hover {
+      background: #4b5563;
+    }
+
+    .modal-body .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-body textarea {
+      width: 100%;
+      min-height: 300px;
+      max-height: 50vh;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.75rem;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      resize: vertical;
+    }
+
+    .csv-template {
+      font-size: 0.7rem;
+      color: #666;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre;
+      font-family: monospace;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      padding: 10px;
+      background: #fef2f2;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="panel">
-      <h1>Boring Log Generator</h1>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="form">Form</button>
-        <button class="tab" data-tab="csv">CSV Import</button>
-        <button class="tab" data-tab="json">JSON Editor</button>
-      </div>
-
-      <div id="form-tab" class="tab-content active">
-        <h2>Edit Data</h2>
-        <div id="form-editor-container"></div>
-      </div>
-
-      <div id="csv-tab" class="tab-content">
-        <h2>Import from CSV</h2>
-        <div class="controls">
-          <div>
-            <label>Upload CSV File</label>
-            <input type="file" id="csv-file" accept=".csv">
-          </div>
-
-          <div>
-            <label>CSV Format (key columns shown)</label>
-            <div class="csv-template">depth_top,depth_bottom,uscs,description,moisture,odor,pid,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
-0,3.5,SM,"Brown silty SAND",moist,petroleum,45.2,2,SPT,S-1,4,5,6,18
-3.5,12,CL,"Gray lean CLAY",wet,none,0.5,5,SPT,S-2,8,10,12,16</div>
-            <p style="font-size:0.7rem;color:#666;margin-top:5px;">+ boring_id, project, client, date, time, weather, consultant_*, driller_*, well_*, coord_*, groundwater_*</p>
-          </div>
-
-          <button id="load-sample">Load Sample Data</button>
-
-          <div id="csv-error" class="error" style="display:none;"></div>
+    <!-- Sidebar: toolbar + form editor -->
+    <div class="panel sidebar">
+      <div class="sidebar-toolbar">
+        <div class="toolbar-group">
+          <button class="toolbar-btn" id="btn-import-csv" title="Import CSV">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 14V3M10 3L6 7M10 3L14 7"/>
+              <path d="M3 13v2a2 2 0 002 2h10a2 2 0 002-2v-2"/>
+            </svg>
+            <span>Import</span>
+          </button>
+          <button class="toolbar-btn" id="btn-json-editor" title="JSON Editor">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 5L3 10l4 5M13 5l4 5-4 5"/>
+            </svg>
+            <span>JSON</span>
+          </button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="toolbar-group">
+          <button class="toolbar-btn" id="btn-export-svg" title="Export SVG">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 3v11M10 14l-4-4M10 14l4-4"/>
+              <path d="M3 13v2a2 2 0 002 2h10a2 2 0 002-2v-2"/>
+            </svg>
+            <span>SVG</span>
+          </button>
+          <button class="toolbar-btn" id="btn-export-png" title="Export PNG">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 3v11M10 14l-4-4M10 14l4-4"/>
+              <path d="M3 13v2a2 2 0 002 2h10a2 2 0 002-2v-2"/>
+            </svg>
+            <span>PNG</span>
+          </button>
         </div>
       </div>
-
-      <div id="json-tab" class="tab-content">
-        <h2>JSON Data</h2>
-        <div class="controls">
-          <textarea id="json-editor"></textarea>
-          <div class="button-group">
-            <button id="apply-json">Apply Changes</button>
-            <button id="format-json" class="secondary">Format</button>
-          </div>
-          <div id="json-error" class="error" style="display:none;"></div>
-        </div>
-      </div>
-
-      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-        <h2>Export</h2>
-        <div class="button-group">
-          <button id="export-svg">Export SVG</button>
-          <button id="export-png" class="secondary">Export PNG</button>
-        </div>
-      </div>
+      <div id="form-editor-container"></div>
     </div>
 
-    <div class="panel">
+    <!-- Preview -->
+    <div class="panel preview-panel">
       <h2>Preview</h2>
       <div id="log-container"></div>
     </div>
   </div>
 
-  <script src="csv-parser.js?v=10"></script>
-  <script src="boring-log.js?v=10"></script>
-  <script src="form-editor.js?v=10"></script>
+  <!-- CSV Import Modal -->
+  <div class="modal-overlay" id="csv-modal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Import CSV</h3>
+        <button class="modal-close" data-modal="csv-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label>Upload CSV File</label>
+          <input type="file" id="csv-file" accept=".csv">
+        </div>
+        <div>
+          <label>CSV Format (key columns shown)</label>
+          <div class="csv-template">depth_top,depth_bottom,uscs,description,moisture,odor,pid,sample_depth,sample_type,sample_id,blow1,blow2,blow3,recovery
+0,3.5,SM,"Brown silty SAND",moist,petroleum,45.2,2,SPT,S-1,4,5,6,18
+3.5,12,CL,"Gray lean CLAY",wet,none,0.5,5,SPT,S-2,8,10,12,16</div>
+          <p style="font-size:0.7rem;color:#666;margin-top:5px;">+ boring_id, project, client, date, time, weather, consultant_*, driller_*, well_*, coord_*, groundwater_*</p>
+        </div>
+        <button id="load-sample">Load Sample Data</button>
+        <div id="csv-error" class="error" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON Editor Modal -->
+  <div class="modal-overlay" id="json-modal" style="display:none;">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3>JSON Editor</h3>
+        <button class="modal-close" data-modal="json-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="json-editor"></textarea>
+        <div class="button-group">
+          <button id="apply-json">Apply Changes</button>
+          <button id="format-json" class="secondary">Format</button>
+        </div>
+        <div id="json-error" class="error" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="csv-parser.js?v=11"></script>
+  <script src="boring-log.js?v=11"></script>
+  <script src="form-editor.js?v=11"></script>
   <script>
     // Sample data for demonstration
     const sampleData = {
@@ -584,12 +720,10 @@
       }
     };
 
-    // Initialize the boring log component
+    // Initialize components
     const container = document.getElementById('log-container');
     const boringLog = new BoringLog(container);
     const jsonEditor = document.getElementById('json-editor');
-
-    // Initialize form editor
     const formEditorContainer = document.getElementById('form-editor-container');
     const formEditor = new FormEditor(formEditorContainer, boringLog);
 
@@ -598,47 +732,89 @@
     jsonEditor.value = JSON.stringify(sampleData, null, 2);
     formEditor.setData(sampleData);
 
-    // Tab switching with data sync
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const currentTab = document.querySelector('.tab.active').dataset.tab;
-        const newTab = tab.dataset.tab;
+    // --- Modal helpers ---
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.style.display = 'flex';
+      if (id === 'json-modal') {
+        const data = formEditor.getData();
+        jsonEditor.value = JSON.stringify(data, null, 2);
+      }
+    }
 
-        // Sync data when switching tabs
-        if (currentTab === 'form' && newTab !== 'form') {
-          // Form -> other: update JSON editor with form data
-          const data = formEditor.getData();
-          jsonEditor.value = JSON.stringify(data, null, 2);
-        } else if (currentTab === 'json' && newTab === 'form') {
-          // JSON -> Form: parse JSON and update form
-          try {
-            const data = JSON.parse(jsonEditor.value);
-            formEditor.setData(data);
-          } catch (e) {
-            // If JSON is invalid, keep form data as-is
-          }
-        }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
 
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal(overlay.id);
       });
     });
 
-    // Load sample data button
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.modal));
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+          if (m.style.display !== 'none') closeModal(m.id);
+        });
+      }
+    });
+
+    // --- Toolbar buttons ---
+    document.getElementById('btn-import-csv').addEventListener('click', () => openModal('csv-modal'));
+    document.getElementById('btn-json-editor').addEventListener('click', () => openModal('json-modal'));
+
+    document.getElementById('btn-export-svg').addEventListener('click', () => {
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'boring-log.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-export-png').addEventListener('click', () => {
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+        ctx.scale(2, 2);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'boring-log.png';
+        a.click();
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    });
+
+    // --- CSV Import ---
     document.getElementById('load-sample').addEventListener('click', () => {
       boringLog.setData(sampleData);
       jsonEditor.value = JSON.stringify(sampleData, null, 2);
       formEditor.setData(sampleData);
       document.getElementById('csv-error').style.display = 'none';
+      closeModal('csv-modal');
     });
 
-    // CSV file import
     document.getElementById('csv-file').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
@@ -647,6 +823,7 @@
           jsonEditor.value = JSON.stringify(data, null, 2);
           formEditor.setData(data);
           document.getElementById('csv-error').style.display = 'none';
+          closeModal('csv-modal');
         } catch (err) {
           document.getElementById('csv-error').textContent = 'Error parsing CSV: ' + err.message;
           document.getElementById('csv-error').style.display = 'block';
@@ -655,13 +832,14 @@
       reader.readAsText(file);
     });
 
-    // JSON editor
+    // --- JSON Editor ---
     document.getElementById('apply-json').addEventListener('click', () => {
       try {
         const data = JSON.parse(jsonEditor.value);
         boringLog.setData(data);
         formEditor.setData(data);
         document.getElementById('json-error').style.display = 'none';
+        closeModal('json-modal');
       } catch (err) {
         document.getElementById('json-error').textContent = 'Invalid JSON: ' + err.message;
         document.getElementById('json-error').style.display = 'block';
@@ -677,49 +855,6 @@
         document.getElementById('json-error').textContent = 'Invalid JSON: ' + err.message;
         document.getElementById('json-error').style.display = 'block';
       }
-    });
-
-    // Export SVG
-    document.getElementById('export-svg').addEventListener('click', () => {
-      const svg = container.querySelector('svg');
-      if (!svg) return;
-
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const blob = new Blob([svgData], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'boring-log.svg';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    // Export PNG
-    document.getElementById('export-png').addEventListener('click', () => {
-      const svg = container.querySelector('svg');
-      if (!svg) return;
-
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-
-      img.onload = () => {
-        canvas.width = img.width * 2;
-        canvas.height = img.height * 2;
-        ctx.scale(2, 2);
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'boring-log.png';
-        a.click();
-      };
-
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
     });
   </script>
 </body>
